@@ -58,6 +58,10 @@ flowchart LR
 
 ## 运行截图
 
+![分析结果：总览与内容拆解](docs/screenshots/result-overview.png)
+
+![分析结果：评论口碑与核心观点](docs/screenshots/result-comments.png)
+
 ![前端界面](docs/screenshots/frontend.png)
 
 ![API 文档（标题 KOL Video Analysis）](docs/screenshots/api-docs.png)
