@@ -1,36 +1,26 @@
-# 版本 = 本机 pip list 实测已安装版本（2026-08-28 核对）。
-# 原先此文件的版本号与实际安装环境全部不一致，且 fastapi/uvicorn 从未安装过，
-# 已按实测值就地修正——写一个没验证过的版本号等于没有锁定。
+# Pinned versions for reproducible installs.
 
-# ---- 接入层 ----
+# ---- API / server ----
 fastapi==0.141.1
 uvicorn==0.52.4
-httpx==0.28.1  # fastapi.testclient 的底层客户端（测试用）
+httpx==0.28.1
 
-# ---- 存储层 ----
+# ---- Storage ----
 SQLAlchemy==2.0.52
 
-# ---- 数据获取层 ----
+# ---- YouTube / media ----
 yt-dlp==2026.8.19
-# 2026-08-28 真实数据验收发现：原锁定 0.6.2 发布于 2023-12，中间隔了
-# 1.0.0 这个破坏性大版本（list_transcripts() 静态方法 → list() 实例方法，
-# proxies dict 参数 → 构造函数传 GenericProxyConfig），旧版本在真实频道上
-# 大量报 ParseError: no element found，已升级并适配新 API（见 adapters/youtube/transcript.py）
 youtube-transcript-api==1.2.4
 google-api-python-client==2.199.0
 requests==2.34.2
-# 本地 ASR 兜底（决策 B2）。2026-08-28 真实数据验收发现：此前该包在开发环境
-# 从未真实安装过（8 个测试全靠 mock 通过），装上后首次真实跑通即发现
-# device="auto" 在缺 cuBLAS 运行库的机器上会崩溃且不自动回退 CPU，已修复
-# （见 adapters/youtube/transcript.py._transcribe_with_fallback）。模型首次使用才下载（small ~460MB）
 faster-whisper==1.2.1
 
-# ---- 核心解析层 / 服务 ----
+# ---- LLM / utils ----
 openai==3.5.0
 pydantic==2.13.4
 python-dotenv==1.2.3
 PyYAML==6.0.3
 emoji==2.15.0
 
-# ---- 测试 ----
+# ---- Tests ----
 pytest==9.1.1

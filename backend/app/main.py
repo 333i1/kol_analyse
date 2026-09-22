@@ -63,7 +63,7 @@ async def lifespan(app: FastAPI):
                 pass
 
 
-app = FastAPI(title="video-analysis-mvp", lifespan=lifespan)
+app = FastAPI(title="KOL Video Analysis", lifespan=lifespan)
 app.include_router(router)
 
 
