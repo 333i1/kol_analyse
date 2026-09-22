@@ -1,0 +1,14 @@
+﻿fastapi>=0.110
+uvicorn[standard]>=0.27
+sqlalchemy>=2.0
+pydantic>=2.0
+pydantic-settings>=2.0
+httpx[socks]>=0.27
+youtube-transcript-api>=1.2.4
+yt-dlp>=2024.1
+jsonschema>=4.0
+faster-whisper>=1.0
+pytest>=8.0
+pytest-asyncio>=0.23
+PySocks>=1.7.1
+socksio>=1.0.0

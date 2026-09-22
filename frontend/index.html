@@ -1,0 +1,2456 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>KOL 达人搜索</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0916;
+      --bg2: #141226;
+      --bg3: #1e1c2e;
+      --ink: #eae8f8;
+      --muted: #928cb4;
+      --rule: #2c2a48;
+      --accent: #9b62ff;
+      --accent2: #22d3ee;
+      --hook: #ef4444;
+      --body: #22d3ee;
+      --cta: #22c55e;
+      --ad: #d846ef;
+      --pos: #22c55e;
+      --neu: #64748b;
+      --neg: #ef4444;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --ok: #22c55e;
+      --shadow: 0 8px 28px rgba(0,0,0,.45), 0 0 0 1px rgba(155,98,255,.08);
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: Inter, ui-sans-serif, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.5;
+      min-width: 960px;
+    }
+    button, input { font-family: inherit; }
+    button { cursor: pointer; }
+    .app {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      min-height: 100vh;
+    }
+
+    /* Left rail */
+    .rail {
+      background: #0c0b16;
+      border-right: 1px solid var(--rule);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 0 16px;
+      gap: 6px;
+    }
+    .rail-logo {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #9568ff, #7c3aed);
+      display: grid; place-items: center;
+      font-weight: 800; color: #faf8ff; font-size: 14px;
+      margin-bottom: 10px;
+      letter-spacing: -0.5px;
+    }
+    .rail-item {
+      width: 60px;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      display: flex; flex-direction: column; align-items: center;
+      gap: 4px;
+      padding: 10px 4px;
+      border-radius: 10px;
+      font-size: 10px;
+      position: relative;
+    }
+    .rail-item svg { width: 20px; height: 20px; }
+    .rail-item.active {
+      background: rgba(155,98,255,.14);
+      color: var(--ink);
+      box-shadow: inset 0 0 0 1px rgba(155,98,255,.28);
+    }
+    .rail-item.active svg { color: var(--accent); }
+    .rail-item.disabled { opacity: .42; cursor: not-allowed; }
+    .rail-item.disabled:hover .tip {
+      opacity: 1; transform: translateY(-50%) translateX(0);
+      pointer-events: none;
+    }
+    .tip {
+      position: absolute;
+      left: calc(100% + 10px);
+      top: 50%;
+      transform: translateY(-50%) translateX(-4px);
+      background: #141226;
+      color: var(--ink);
+      border: 1px solid var(--rule);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      transition: .15s ease;
+      z-index: 20;
+      box-shadow: var(--shadow);
+    }
+
+    /* Main */
+    .main { display: flex; flex-direction: column; min-width: 0; }
+    .topbar {
+      height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--rule);
+      background: rgba(10,9,22,.92);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand h1 { font-size: 15px; font-weight: 650; letter-spacing: .2px; }
+    .pill {
+      font-size: 11px; font-weight: 600;
+      padding: 3px 8px; border-radius: 999px;
+      border: 1px solid var(--rule);
+      color: var(--muted); background: var(--bg2);
+    }
+    .pill.gold {
+      color: #e9d5ff; border-color: rgba(155,98,255,.35);
+      background: rgba(155,98,255,.12);
+    }
+    .badge-sample {
+      font-size: 11px; font-weight: 700;
+      padding: 4px 10px; border-radius: 999px;
+      color: #e9d5ff;
+      background: rgba(155,98,255,.14);
+      border: 1px solid rgba(155,98,255,.35);
+      letter-spacing: .3px;
+    }
+
+    .canvas { padding: 20px 28px 28px; max-width: 1240px; width: 100%; margin: 0 auto; }
+
+    /* URL bar */
+    .url-card {
+      background: var(--bg2);
+      border: 1px solid var(--rule);
+      border-radius: 14px;
+      padding: 14px 14px 14px 16px;
+      display: flex; gap: 10px; align-items: center;
+      box-shadow: 0 1px 0 rgba(255,255,255,.03) inset;
+    }
+    .url-wrap { flex: 1; position: relative; }
+    .url-wrap input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--rule);
+      color: var(--ink);
+      height: 42px;
+      border-radius: 10px;
+      padding: 0 14px 0 40px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .url-wrap input::placeholder { color: #6b6585; }
+    .url-wrap input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(155,98,255,.18);
+    }
+    .url-wrap input.invalid {
+      border-color: var(--danger);
+      box-shadow: 0 0 0 3px rgba(239,68,68,.18);
+    }
+    .url-ico {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--muted); width: 18px; height: 18px; pointer-events: none;
+    }
+    .btn-go {
+      height: 42px; padding: 0 18px;
+      background: linear-gradient(135deg, #9b62ff, #7c3aed 55%, #d846ef);
+      color: #faf8ff; font-weight: 700; font-size: 14px;
+      border: 0; border-radius: 10px;
+      display: flex; align-items: center; gap: 6px;
+      box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, 0 8px 22px rgba(124,58,237,.35);
+    }
+    .btn-go:hover { filter: brightness(1.06); }
+    .btn-go:active { transform: translateY(1px); }
+    .btn-go:disabled,
+    .btn-go:disabled:hover,
+    .btn-go:disabled:active {
+      opacity: .55;
+      cursor: not-allowed;
+      filter: none;
+      transform: none;
+    }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20% { transform: translateX(-7px); }
+      40% { transform: translateX(7px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
+    }
+    .shake { animation: shake .42s ease; }
+
+    /* States */
+    .state { margin-top: 18px; }
+    .hidden { display: none !important; }
+
+    .empty {
+      border: 1px dashed var(--rule);
+      background: linear-gradient(180deg, #141b27, #10161f);
+      border-radius: 16px;
+      padding: 56px 24px 48px;
+      text-align: center;
+    }
+    .empty-ico {
+      width: 56px; height: 56px; margin: 0 auto 14px;
+      border-radius: 16px;
+      background: var(--bg2);
+      border: 1px solid var(--rule);
+      display: grid; place-items: center;
+      color: var(--accent);
+    }
+    .empty h2 { font-size: 18px; font-weight: 650; margin-bottom: 6px; }
+    .empty p { color: var(--muted); font-size: 13px; margin-bottom: 22px; }
+    .chips { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+    .chip {
+      background: var(--bg2);
+      border: 1px solid var(--rule);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 13px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .chip:hover { border-color: var(--accent); color: #e9d5ff; }
+    .chip b { color: var(--accent); font-weight: 700; font-size: 12px; }
+
+    /* Analyzing */
+    .analyzing {
+      background: var(--bg2);
+      border: 1px solid var(--rule);
+      border-radius: 16px;
+      padding: 28px 32px 32px;
+    }
+    .analyzing-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+    .analyzing-head h2 { font-size: 15px; font-weight: 650; }
+    .analyzing-head span { color: var(--muted); font-size: 12px; }
+    .bar { height: 4px; background: #0c1119; border-radius: 99px; overflow: hidden; margin-bottom: 22px; }
+    .bar > i {
+      display: block; height: 100%; width: 0;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 99px;
+      transition: width .32s ease;
+    }
+    .steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+    .step {
+      background: var(--bg);
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 14px 12px;
+      min-height: 92px;
+    }
+    .step .n {
+      width: 22px; height: 22px; border-radius: 50%;
+      border: 1px solid var(--rule);
+      color: var(--muted); font-size: 11px; font-weight: 700;
+      display: grid; place-items: center; margin-bottom: 8px;
+    }
+    .step .t { font-size: 13px; font-weight: 600; }
+    .step .s { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .step.active { border-color: rgba(155,98,255,.5); box-shadow: 0 0 0 3px rgba(155,98,255,.10); }
+    .step.active .n { border-color: var(--accent); color: var(--accent); background: rgba(155,98,255,.12); }
+    .step.done { border-color: rgba(34,197,94,.35); }
+    .step.done .n { background: var(--ok); border-color: var(--ok); color: #052e16; }
+    .spin {
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 2px solid rgba(155,98,255,.25); border-top-color: var(--accent);
+      animation: spin .7s linear infinite; display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Error */
+    .error {
+      background: rgba(239,68,68,.08);
+      border: 1px solid rgba(239,68,68,.35);
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .error h3 { font-size: 14px; margin-bottom: 4px; color: #fca5a5; }
+    .error p { font-size: 13px; color: var(--muted); }
+
+    /* Results */
+    .results { display: flex; flex-direction: column; gap: 14px; }
+    .zone { background: var(--bg2); border: 1px solid var(--rule); border-radius: 14px; padding: 16px 18px; }
+    .zone-h {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px; gap: 10px;
+    }
+    .zone-h h3 { font-size: 13px; font-weight: 700; letter-spacing: .3px; display: flex; align-items: center; gap: 8px; }
+    .zn {
+      width: 18px; height: 18px; border-radius: 5px;
+      background: #2a2640; color: var(--muted);
+      font-size: 10px; font-weight: 800;
+      display: grid; place-items: center;
+    }
+    .meta-note { font-size: 11px; color: var(--muted); }
+
+    /* Health */
+    .health-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .status {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 650;
+      padding: 5px 10px; border-radius: 999px;
+      border: 1px solid var(--rule); background: var(--bg);
+    }
+    .dot { width: 7px; height: 7px; border-radius: 50%; }
+    .dot.ok { background: var(--ok); box-shadow: 0 0 0 3px rgba(34,197,94,.18); }
+    .dot.warn { background: var(--warn); box-shadow: 0 0 0 3px rgba(245,158,11,.18); }
+    .dot.bad { background: var(--danger); }
+    .health-sub { margin-top: 10px; color: var(--muted); font-size: 12px; display: flex; gap: 16px; flex-wrap: wrap; }
+
+    /* Contrast 对照总述 */
+    .contrast-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .contrast-col {
+      background: var(--bg);
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 12px 14px 14px;
+      min-height: 84px;
+    }
+    .contrast-col .lab {
+      font-size: 11px; font-weight: 800; letter-spacing: .4px;
+      margin-bottom: 6px;
+    }
+    .contrast-col .lab.say { color: #a5f3fc; }
+    .contrast-col .lab.reply { color: #fcd34d; }
+    .contrast-col p {
+      font-size: 13.5px; color: var(--ink); line-height: 1.55; font-weight: 550;
+    }
+    .contrast-sent {
+      margin-top: 10px;
+      font-size: 13.5px;
+      line-height: 1.6;
+      padding: 10px 12px;
+      background: rgba(155,98,255,.10);
+      border: 1px solid rgba(155,98,255,.28);
+      border-radius: 10px;
+      color: #e9d5ff;
+    }
+    .fresh {
+      margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .tag {
+      font-size: 11px; padding: 3px 8px; border-radius: 6px;
+      background: #121925; border: 1px solid var(--rule); color: var(--muted);
+    }
+
+    /* Metrics */
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+    }
+    .metric {
+      background: var(--bg);
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 12px 12px 11px;
+    }
+    .metric .k { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+    .metric .v { font-size: 20px; font-weight: 750; letter-spacing: -.3px; }
+    .metric .u { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* Segments 开场 / 展开 / 收束 */
+    .segs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .seg {
+      background: var(--bg);
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: left;
+      color: inherit;
+      width: 100%;
+      transition: border-color .15s, transform .15s;
+    }
+    .seg:hover { border-color: #4b5a70; transform: translateY(-1px); }
+    .seg-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .frame {
+      font-size: 11px; font-weight: 800; letter-spacing: .4px;
+      padding: 2px 8px; border-radius: 999px; color: #fff;
+    }
+    .frame.open { background: var(--hook); }
+    .frame.develop { background: var(--body); }
+    .frame.close { background: var(--cta); color: #052e16; }
+    .conf { font-size: 12px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+    .meter { height: 4px; background: #0c1119; border-radius: 99px; overflow: hidden; margin-bottom: 10px; }
+    .meter > i { display: block; height: 100%; border-radius: 99px; }
+    .seg p { font-size: 12.5px; color: #c9d3e2; line-height: 1.55; min-height: 58px; }
+    .seg .more { font-size: 11px; color: var(--accent); font-weight: 650; }
+    .seg-tags { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 6px; }
+    .mini {
+      font-size: 10px; font-weight: 800;
+      padding: 2px 7px; border-radius: 999px;
+    }
+    .mini.cta { background: rgba(34,197,94,.18); color: #86efac; border: 1px solid rgba(34,197,94,.35); }
+    .mini.ad { background: rgba(168,85,247,.16); color: #d8b4fe; border: 1px solid rgba(168,85,247,.35); }
+
+    /* Closing conclusion cards */
+    .conclude {
+      margin-top: 14px;
+      background: var(--bg);
+      border: 1px solid var(--rule);
+      border-left: 3px solid var(--accent);
+      border-radius: 10px;
+      padding: 12px 14px 14px;
+    }
+    .conclude.comment { border-left-color: var(--accent2); }
+    .conclude-lab {
+      font-size: 10px; font-weight: 800; letter-spacing: 1.4px;
+      color: var(--accent); margin-bottom: 4px;
+    }
+    .conclude.comment .conclude-lab { color: #93c5fd; }
+    .conclude h4 { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+    .conclude .crow {
+      display: grid;
+      grid-template-columns: 76px 1fr;
+      gap: 8px;
+      font-size: 12.5px;
+      padding: 6px 0;
+      border-top: 1px solid var(--rule);
+      align-items: start;
+    }
+    .conclude .crow:first-of-type { border-top: 0; padding-top: 0; }
+    .conclude .rk { color: var(--muted); font-weight: 650; }
+    .type-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .type-pill {
+      font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 999px;
+      background: rgba(59,130,246,.12);
+      border: 1px solid rgba(59,130,246,.35);
+      color: #93c5fd;
+    }
+    .conclude-meta {
+      margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap;
+    }
+
+    /* Sentiment */
+    .sent-bar {
+      display: flex; height: 16px; border-radius: 8px; overflow: hidden;
+      background: #0c1119; margin: 4px 0 12px;
+    }
+    .sent-bar button {
+      border: 0; height: 100%; padding: 0; min-width: 0;
+      color: transparent; font-size: 0;
+    }
+    .sent-bar .pos { background: var(--pos); }
+    .sent-bar .neu { background: #64748b; }
+    .sent-bar .neg { background: var(--neg); }
+    .sent-bar button:hover { filter: brightness(1.12); }
+    .legend { display: flex; gap: 16px; font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+    .legend b { color: var(--ink); font-weight: 700; }
+    .sw { width: 8px; height: 8px; border-radius: 2px; display: inline-block; margin-right: 6px; }
+    .sublab { font-size: 11px; color: var(--muted); font-weight: 700; margin: 0 0 8px; letter-spacing: .3px; }
+    .themes, .rchips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .tchip, .rchip {
+      background: var(--bg); border: 1px solid var(--rule); color: var(--ink);
+      border-radius: 999px; padding: 5px 11px; font-size: 12px;
+    }
+    .tchip:hover { border-color: var(--accent2); color: #a5f3fc; }
+    .rchip:hover { border-color: var(--accent); color: #e9d5ff; }
+    .rchip .n { color: var(--muted); font-size: 11px; margin-left: 4px; }
+    .quotes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .quote {
+      background: var(--bg); border: 1px solid var(--rule); border-radius: 12px; padding: 12px;
+    }
+    .quote .ql { font-size: 11px; font-weight: 800; margin-bottom: 6px; }
+    .quote .ql.pos { color: var(--pos); }
+    .quote .ql.neg { color: #fca5a5; }
+    .quote p { font-size: 13px; color: #dbe4f0; }
+    .quote .lk { font-size: 11px; color: var(--muted); margin-top: 8px; }
+
+    .split { display: grid; grid-template-columns: 1.2fr .8fr; gap: 10px; margin-top: 12px; }
+    .list-card { background: var(--bg); border: 1px solid var(--rule); border-radius: 12px; padding: 12px; }
+    .list-card h4 { font-size: 12px; font-weight: 700; margin-bottom: 8px; color: var(--muted); }
+    .lc-item {
+      font-size: 12.5px; padding: 8px 0;
+      border-top: 1px solid var(--rule);
+      display: flex; justify-content: space-between; gap: 10px; align-items: flex-start;
+    }
+    .lc-item:first-of-type { border-top: 0; padding-top: 0; }
+    .lc-item .sc { color: var(--warn); font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .noise { font-size: 12px; color: var(--muted); margin-top: 10px; }
+
+
+    .top-actions { display: flex; align-items: center; gap: 10px; }
+    .btn-hist {
+      height: 30px; padding: 0 12px;
+      background: var(--bg2); color: var(--ink);
+      font-weight: 650; font-size: 12px;
+      border: 1px solid var(--rule); border-radius: 8px;
+    }
+    .btn-hist:hover { border-color: var(--accent); color: #e9d5ff; }
+    .btn-hist.active {
+      border-color: rgba(155,98,255,.5);
+      color: #e9d5ff;
+      background: rgba(155,98,255,.12);
+    }
+    .btn-refresh {
+      height: 28px; padding: 0 12px;
+      background: transparent; color: #c4b5fd;
+      font-weight: 650; font-size: 12px;
+      border: 1px solid rgba(155,98,255,.45);
+      border-radius: 8px;
+    }
+    .btn-refresh:hover { background: rgba(155,98,255,.12); }
+    .btn-refresh:active { transform: translateY(1px); }
+    .zone-h-actions { display: flex; align-items: center; gap: 8px; }
+
+    .hist-overlay { z-index: 42; }
+    .hist-panel { width: 360px; z-index: 43; }
+    .hist-hint {
+      font-size: 11px; color: var(--muted);
+      margin: -4px 18px 10px;
+    }
+    .hist-row {
+      width: 100%; text-align: left;
+      background: var(--bg2);
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex; gap: 10px; align-items: flex-start;
+      margin-bottom: 8px;
+      color: inherit;
+      transition: border-color .15s, box-shadow .15s, background .15s;
+    }
+    .hist-row:hover { border-color: #3d3860; }
+    .hist-row.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(155,98,255,.16);
+      background: rgba(155,98,255,.08);
+    }
+    .hist-main { flex: 1; min-width: 0; }
+    .hist-title {
+      font-size: 13px; font-weight: 650; line-height: 1.35;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .hist-sub {
+      font-size: 12px; color: var(--muted); margin-top: 5px; line-height: 1.45;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .hist-type {
+      font-size: 10px; font-weight: 800;
+      padding: 1px 6px; border-radius: 999px;
+      background: rgba(59,130,246,.12);
+      border: 1px solid rgba(59,130,246,.35);
+      color: #93c5fd;
+      margin-top: 7px;
+      display: inline-block;
+    }
+    .hist-right {
+      display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+      flex-shrink: 0;
+    }
+    .hist-time { font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .hist-st {
+      font-size: 10px; font-weight: 800;
+      padding: 2px 7px; border-radius: 999px; white-space: nowrap;
+    }
+    .hist-st.ok {
+      color: #86efac; background: rgba(34,197,94,.14);
+      border: 1px solid rgba(34,197,94,.35);
+    }
+    .hist-st.bad {
+      color: #fca5a5; background: rgba(239,68,68,.12);
+      border: 1px solid rgba(239,68,68,.35);
+    }
+    .error .err-actions { margin-top: 12px; }
+    .hist-empty { font-size: 13px; color: var(--muted); padding: 18px 4px; }
+
+    /* Drawer */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.46);
+      z-index: 40;
+      opacity: 0; pointer-events: none;
+      transition: opacity .2s;
+    }
+    .overlay.show { opacity: 1; pointer-events: auto; }
+    .drawer {
+      position: fixed; top: 0; right: 0; height: 100%;
+      width: min(420px, 92vw);
+      background: #121925;
+      border-left: 1px solid var(--rule);
+      z-index: 50;
+      transform: translateX(100%);
+      transition: transform .22s ease;
+      display: flex; flex-direction: column;
+      box-shadow: -16px 0 40px rgba(0,0,0,.35);
+    }
+    .drawer.show { transform: translateX(0); }
+    .drawer-h {
+      padding: 16px 18px; border-bottom: 1px solid var(--rule);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .drawer-h h3 { font-size: 14px; }
+    .x {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--bg2); border: 1px solid var(--rule); color: var(--ink);
+    }
+    .drawer-b { padding: 16px 18px; overflow: auto; flex: 1; }
+    .mockline {
+      background: var(--bg2); border: 1px solid var(--rule); border-radius: 10px;
+      padding: 10px 12px; margin-bottom: 8px; font-size: 13px;
+    }
+    .mockline .ts { color: var(--accent); font-size: 11px; font-weight: 700; margin-right: 8px; }
+    .sample-flag { font-size: 11px; color: var(--accent); margin-bottom: 12px; }
+
+    /* Toast */
+    .toast {
+      position: fixed; top: 18px; left: 50%; transform: translateX(-50%) translateY(-20px);
+      background: #141226; color: var(--ink);
+      border: 1px solid rgba(155,98,255,.4);
+      padding: 10px 16px; border-radius: 10px;
+      font-size: 13px; font-weight: 650; z-index: 80;
+      opacity: 0; pointer-events: none;
+      box-shadow: var(--shadow);
+      transition: .2s ease;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+
+    .choice-overlay { z-index: 60; }
+    .choice-modal {
+      position: fixed; left: 50%; top: 46%;
+      transform: translate(-50%, -50%);
+      width: min(440px, 92vw);
+      background: #141226;
+      border: 1px solid var(--rule);
+      border-radius: 14px;
+      padding: 20px 20px 16px;
+      z-index: 61;
+      box-shadow: var(--shadow);
+      display: none;
+    }
+    .choice-modal.show { display: block; }
+    .choice-modal h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+    .choice-modal p { font-size: 13px; color: var(--muted); margin-bottom: 16px; line-height: 1.55; }
+    .choice-actions { display: flex; flex-direction: column; gap: 8px; }
+    .choice-actions .btn-go { justify-content: center; width: 100%; }
+    .btn-ghost {
+      height: 42px; padding: 0 18px;
+      background: var(--bg2); color: var(--ink);
+      font-weight: 700; font-size: 14px;
+      border: 1px solid var(--rule); border-radius: 10px;
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: #e9d5ff; }
+
+    footer.note {
+      margin-top: 22px;
+      color: #6b6585; font-size: 11px; text-align: center;
+    }
+
+    @media (max-width: 1100px) {
+      .metrics { grid-template-columns: repeat(3, 1fr); }
+      .segs { grid-template-columns: 1fr 1fr; }
+      .contrast-grid { grid-template-columns: 1fr; }
+      .quotes, .split { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* Mode toggle (单视频 | 频道) */
+    .mode {
+      display: flex; background: var(--bg); border: 1px solid var(--rule);
+      border-radius: 10px; padding: 3px; flex-shrink: 0;
+    }
+    .mode button {
+      height: 36px; padding: 0 12px; border: 0; border-radius: 8px;
+      background: transparent; color: var(--muted); font-size: 13px; font-weight: 700;
+    }
+    .mode button.on { background: rgba(155,98,255,.18); color: #e9d5ff; }
+
+    /* Channel brief extras */
+    .metric.ch { border-color: rgba(34,211,238,.28); }
+    .split2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .col { background: var(--bg); border: 1px solid var(--rule); border-radius: 12px; padding: 12px 14px; }
+    .col .lab { font-size: 11px; font-weight: 800; letter-spacing: .4px; margin-bottom: 8px; }
+    .col .lab.near { color: #a5f3fc; }
+    .col .lab.hot { color: #fcd34d; }
+    .kv { display: grid; grid-template-columns: 72px 1fr; gap: 6px 8px; font-size: 13px; }
+    .kv .rk { color: var(--muted); font-weight: 650; font-size: 12px; }
+    .bars { display: flex; flex-direction: column; gap: 8px; }
+    .bar-row { display: grid; grid-template-columns: 64px 1fr 40px; gap: 8px; align-items: center; font-size: 12px; }
+    .bar-row .nm { color: var(--muted); }
+    .bar-row .n { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .track { height: 8px; background: #0c0b16; border-radius: 99px; overflow: hidden; }
+    .track > i { display: block; height: 100%; border-radius: 99px; background: var(--accent2); }
+    .track.gold > i { background: var(--accent); }
+    .track.green > i { background: var(--ok); }
+    .track.purple > i { background: var(--ad); }
+    .theses { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .theses li {
+      background: var(--bg); border: 1px solid var(--rule); border-radius: 10px;
+      padding: 8px 10px; font-size: 12.5px; display: grid; grid-template-columns: 42px 1fr; gap: 8px;
+    }
+    .theses .mk { font-size: 10px; font-weight: 800; color: #a5f3fc; padding-top: 2px; }
+    .theses .mk.hot { color: #fcd34d; }
+    .sent-bar { display: flex; height: 16px; border-radius: 8px; overflow: hidden; background: #0c0b16; margin: 4px 0 10px; }
+    .sent-bar .pos { background: var(--pos); }
+    .sent-bar .neu { background: #64748b; }
+    .sent-bar .neg { background: var(--neg); }
+    .legend { display: flex; gap: 16px; font-size: 12px; color: var(--muted); margin-bottom: 12px; flex-wrap: wrap; }
+    .legend b { color: var(--ink); }
+    .sw { width: 8px; height: 8px; border-radius: 2px; display: inline-block; margin-right: 6px; }
+    .sublab { font-size: 11px; color: var(--muted); font-weight: 700; margin: 0 0 8px; }
+    .ch-head { display: flex; gap: 14px; align-items: center; }
+    .avatar {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: linear-gradient(135deg, #3b2d6b, #1a1433);
+      border: 1px solid var(--rule); display: grid; place-items: center;
+      font-weight: 800; color: #e9d5ff; font-size: 16px; flex-shrink: 0;
+    }
+    .ch-head h2 { font-size: 16px; font-weight: 700; }
+    .handle { color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .warn-line {
+      margin-top: 10px; font-size: 12.5px; color: #fde68a;
+      background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.28);
+      border-radius: 10px; padding: 8px 12px;
+    }
+    .dot.run { background: var(--accent2); box-shadow: 0 0 0 3px rgba(34,211,238,.18); }
+    table.vt { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    table.vt th { text-align: left; color: var(--muted); font-weight: 650; font-size: 11px; padding: 8px 8px; border-bottom: 1px solid var(--rule); }
+    table.vt td { padding: 10px 8px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+    table.vt tr.click:hover td { background: rgba(155,98,255,.08); cursor: pointer; }
+    table.vt tr.click:last-child td { border-bottom: 0; }
+    .mini.near { background: rgba(34,211,238,.14); color: #a5f3fc; border: 1px solid rgba(34,211,238,.35); }
+    .mini.hot { background: rgba(245,158,11,.16); color: #fde68a; border: 1px solid rgba(245,158,11,.35); }
+    .mini.ok { background: rgba(34,197,94,.14); color: #86efac; border: 1px solid rgba(34,197,94,.35); }
+    .mini.warn { background: rgba(245,158,11,.14); color: #fde68a; border: 1px solid rgba(245,158,11,.35); }
+    .mini.bad { background: rgba(239,68,68,.12); color: #fca5a5; border: 1px solid rgba(239,68,68,.35); }
+    .mini.run { background: rgba(34,211,238,.14); color: #a5f3fc; border: 1px solid rgba(34,211,238,.35); }
+    .mini.wait { background: #141226; color: var(--muted); border: 1px solid var(--rule); }
+    .title-cell { font-weight: 650; max-width: 280px; }
+    .title-cell span { display: block; color: var(--muted); font-weight: 500; font-size: 11px; margin-top: 2px; }
+    .ops { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .ops button {
+      height: 34px; padding: 0 14px; border-radius: 9px; font-weight: 700; font-size: 13px;
+      background: var(--bg); color: var(--ink); border: 1px solid var(--rule);
+    }
+    .ops button:hover { border-color: #3d3860; }
+    .ops button.pick-yes { background: rgba(34,197,94,.16); border-color: rgba(34,197,94,.5); color: #86efac; }
+    .ops button.pick-wait { background: rgba(245,158,11,.16); border-color: rgba(245,158,11,.5); color: #fde68a; }
+    .ops button.pick-no { background: rgba(239,68,68,.14); border-color: rgba(239,68,68,.45); color: #fca5a5; }
+    .ops-note {
+      margin-top: 10px; width: 100%; min-height: 70px; resize: vertical;
+      background: var(--bg); border: 1px solid var(--rule); color: var(--ink);
+      border-radius: 10px; padding: 10px 12px; font-size: 13px; font-family: inherit;
+    }
+    .ops-note:focus { outline: none; border-color: var(--accent); }
+    .foot-hint { margin-top: 8px; font-size: 11px; color: var(--muted); }
+    .progress-banner {
+      margin-bottom: 12px; font-size: 12.5px; font-weight: 650; color: #a5f3fc;
+      background: rgba(34,211,238,.10); border: 1px solid rgba(34,211,238,.35);
+      border-radius: 10px; padding: 8px 12px; display: flex; align-items: center; gap: 8px;
+    }
+    @media (max-width: 1100px) {
+      .split2 { grid-template-columns: 1fr; }
+    }
+  
+    .batch-panel { display: none; width: 100%; flex-direction: column; gap: 10px; }
+    .url-card.batch-on .batch-panel { display: flex; }
+    .url-card.batch-on .url-wrap, .url-card.batch-on > .btn-go { display: none; }
+    .batch-panel textarea {
+      width: 100%; min-height: 110px; resize: vertical; box-sizing: border-box;
+      background: var(--bg); color: var(--ink); border: 1px solid var(--rule);
+      border-radius: 12px; padding: 10px 12px; font-size: 13px; line-height: 1.45;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .batch-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .batch-toolbar label { font-size: 12px; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
+    .batch-toolbar select, .batch-toolbar .btn-file {
+      height: 34px; border-radius: 8px; border: 1px solid var(--rule);
+      background: var(--bg); color: var(--ink); padding: 0 10px; font-size: 12px;
+    }
+    .batch-toolbar .btn-file { cursor: pointer; display: inline-flex; align-items: center; }
+    .batch-toolbar .btn-go { height: 36px; }
+    .batch-board {
+      margin-top: 4px; background: var(--card, var(--panel)); border: 1px solid var(--rule);
+      border-radius: 16px; padding: 14px 16px;
+    }
+    .batch-board-h { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .batch-board-h h2 { font-size: 15px; margin: 0; }
+    .batch-board-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .batch-board-actions button {
+      height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--rule);
+      background: rgba(155,98,255,.14); color: #e9d5ff; font-size: 12px; font-weight: 700; cursor: pointer;
+    }
+    .batch-board-actions button:disabled { opacity: .45; cursor: not-allowed; }
+    .batch-summary { font-size: 12px; color: var(--muted); }
+    .batch-table-wrap { overflow: auto; max-height: min(52vh, 520px); border: 1px solid var(--rule); border-radius: 12px; }
+    .batch-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .batch-table th, .batch-table td { padding: 8px 10px; border-bottom: 1px solid var(--rule); text-align: left; vertical-align: top; }
+    .batch-table th { position: sticky; top: 0; background: #12101c; color: var(--muted); font-size: 11px; }
+    .batch-table tr.clickable { cursor: pointer; }
+    .batch-table tr.clickable:hover td { background: rgba(155,98,255,.08); }
+    .st-pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+    .st-pill.ok { background: rgba(34,197,94,.15); color: #86efac; }
+    .st-pill.warn { background: rgba(251,191,36,.15); color: #fcd34d; }
+    .st-pill.bad { background: rgba(239,68,68,.15); color: #fca5a5; }
+    .st-pill.run { background: rgba(34,211,238,.12); color: #a5f3fc; }
+    .st-pill.queue { background: rgba(148,163,184,.12); color: #cbd5e1; }
+
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="rail">
+      <div class="rail-logo">K</div>
+      <button class="rail-item active" type="button" id="railVideo" title="单视频分析">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3V9z"/></svg>
+        单视频
+      </button>
+      <button class="rail-item" type="button" id="railChannel" title="频道分析">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.2"/><path d="M5 19c1.2-3.2 3.8-5 7-5s5.8 1.8 7 5"/></svg>
+        频道
+      </button>
+      <button class="rail-item disabled" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="13" width="7" height="7" rx="1.5"/><rect x="14" y="13" width="7" height="7" rx="1.5"/></svg>
+        多视频
+        <span class="tip">非本 MVP 范围</span>
+      </button>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <div class="brand">
+          <h1 id="pageTitle">KOL 达人搜索 · 单视频分析</h1>
+          <span class="pill gold" id="pagePill">MVP·单视频</span>
+        </div>
+        <div class="top-actions">
+          <button class="btn-hist" id="histBtn" type="button">历史</button>
+        </div>
+      </header>
+
+      <div class="canvas">
+        <div class="url-card" id="urlCard">
+          <div class="mode" id="modeCtrl">
+            <button type="button" class="on" data-mode="video">单视频</button>
+            <button type="button" data-mode="channel">频道</button>
+            <button type="button" data-mode="batch">批量</button>
+          </div>
+          <div class="url-wrap">
+            <svg class="url-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 14a5 5 0 007.07 0l1.41-1.41a5 5 0 00-7.07-7.07L10 6.93"/><path d="M14 10a5 5 0 00-7.07 0L5.52 11.4a5 5 0 007.07 7.07L14 17.07"/></svg>
+            <input id="urlInput" type="text" placeholder="粘贴 YouTube 视频链接，例如 https://www.youtube.com/watch?v=…" autocomplete="off" />
+          </div>
+          <button class="btn-go" id="goBtn" type="button">开始分析</button>
+
+          <div class="batch-panel" id="batchPanel">
+            <textarea id="batchUrls" placeholder="每行一个 YouTube 链接或 11 位 video_id；# 开头为注释"></textarea>
+            <div class="batch-toolbar">
+              <label class="btn-file">上传 txt/csv
+                <input id="batchFile" type="file" accept=".txt,.csv,text/plain" hidden />
+              </label>
+              <label>并发
+                <select id="batchConcurrency">
+                  <option value="1">1</option>
+                  <option value="2" selected>2</option>
+                  <option value="3">3</option>
+                </select>
+              </label>
+              <label><input id="batchSkipCaptions" type="checkbox" checked /> 跳过字幕（标题/简介）</label>
+              <label><input id="batchForce" type="checkbox" /> 强制重跑</label>
+              <span class="meta-note" id="batchCaptionHint" style="flex-basis:100%;opacity:.75">拉取字幕时全局限速串行（默认间隔约 10s）；批量并发只影响任务排队，不会并行打字幕。</span>
+              <button class="btn-go" id="batchGoBtn" type="button">开始批量</button>
+              <button class="btn-go" id="batchAbortBtn" type="button" style="display:none;background:rgba(239,68,68,.2)">停止</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="state" id="stateEmpty">
+          <div class="empty">
+            <div class="empty-ico">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18.5" cy="16.5" r="3.5"/></svg>
+            </div>
+            <h2 id="emptyTitle">粘贴一条 YouTube 链接开始分析</h2>
+            <p id="emptyDesc">点击下方样例只回填 URL，仍走校验与真实分析，不跳过。</p>
+            <div class="chips" id="chipsVideo">
+              <button class="chip" type="button" data-url="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
+                <b>样例 A</b> 音乐 · 经典神曲
+              </button>
+              <button class="chip" type="button" data-url="https://youtu.be/jNQXAC9IVRw">
+                <b>样例 B</b> 日常 · 第一条视频
+              </button>
+              <button class="chip" type="button" data-url="https://www.youtube.com/watch?v=xK9mQp2Lw7R">
+                <b>样例 C</b> 游戏 · 直播集锦
+              </button>
+            </div>
+            <div class="chips hidden" id="chipsChannel">
+              <button class="chip" type="button" data-url="https://www.youtube.com/@MrBeast">
+                <b>@MrBeast</b> 频道主页
+              </button>
+              <button class="chip" type="button" data-url="https://www.youtube.com/@veritasium">
+                <b>@veritasium</b> 科普
+              </button>
+              <button class="chip" type="button" data-url="https://www.youtube.com/@mkbhd">
+                <b>@mkbhd</b> 科技测评
+              </button>
+            </div>
+          </div>
+        </div>
+
+        
+        <div class="state hidden" id="stateBatch">
+          <div class="batch-board">
+            <div class="batch-board-h">
+              <div>
+                <h2>批量任务板</h2>
+                <div class="batch-summary" id="batchSummary">尚未开始</div>
+              </div>
+              <div class="batch-board-actions">
+                <button type="button" id="batchExportCsv" disabled>导出对照 CSV</button>
+                <button type="button" id="batchExportJsonl" disabled>导出 JSONL</button>
+              </div>
+            </div>
+            <div class="batch-table-wrap">
+              <table class="batch-table">
+                <thead>
+                  <tr>
+                    <th>#</th><th>video_id</th><th>状态</th><th>进度</th><th>标题</th><th>耗时</th>
+                  </tr>
+                </thead>
+                <tbody id="batchTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="state hidden" id="stateAnalyzing">
+          <div class="analyzing">
+            <div class="analyzing-head">
+              <h2>正在分析视频 <span class="spin" style="margin-left:8px;vertical-align:-2px"></span></h2>
+              <span id="analyzingHint">校验 URL…</span>
+            </div>
+            <div class="bar"><i id="progBar"></i></div>
+            <div class="steps" id="steps"></div>
+          </div>
+        </div>
+
+        <div class="state hidden" id="stateError">
+          <div class="error">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fca5a5" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5h.01"/></svg>
+            <div>
+              <h3>无法解析为合法 YouTube 视频，不创建任务</h3>
+              <p>需要包含 youtube.com/watch?v= 或 youtu.be/ 及有效视频 ID。当前输入未识别，分析未启动。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="state hidden" id="stateResults"></div>
+
+        <footer class="note">本机分析 · 会请求 YouTube 与字幕接口</footer>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay"></div>
+  <aside class="drawer" id="drawer">
+    <div class="drawer-h">
+      <h3 id="drawerTitle">详情</h3>
+      <button class="x" id="drawerClose" type="button">×</button>
+    </div>
+    <div class="drawer-b" id="drawerBody"></div>
+  </aside>
+  <div class="overlay hist-overlay" id="histOverlay"></div>
+  <aside class="drawer hist-panel" id="histPanel">
+    <div class="drawer-h">
+      <h3>分析历史</h3>
+      <button class="x" id="histClose" type="button">×</button>
+    </div>
+    <div class="hist-hint" id="histHint">点击行查看结果，不填入链接</div>
+    <div class="drawer-b" id="histBody"></div>
+  </aside>
+
+  <div class="overlay choice-overlay" id="choiceOverlay"></div>
+  <div class="choice-modal" id="transcriptModal" role="dialog" aria-modal="true">
+    <h3>没有可用字幕</h3>
+    <p>公开字幕接口未能拿到文稿。语音转录较慢，可能需要下载音频并在本地转写。</p>
+    <div class="choice-actions">
+      <button class="btn-ghost" id="choiceSkip" type="button">跳过转录，只分析标题</button>
+      <button class="btn-go" id="choiceContinue" type="button">继续语音转录</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="result-adapter.js"></script>
+  <script src="analysis-session.js"></script>
+  <script src="channel-adapter.js"></script>
+  <script src="channel-session.js"></script>
+  <script src="batch-session.js"></script>
+  <script>
+    
+    function humanizeBackendError(msg) {
+      const s = String(msg || "");
+      if (/youtube_proxy_failed|无法连接代理/.test(s)) {
+        return "YouTube 元数据/评论走代理失败。默认 Data API 已直连；若仍配了 YOUTUBE_API_PROXY 请检查代理，字幕代理（ALL_PROXY）不影响此项。";
+      }
+      if (/youtube_network_failed|网络连接失败，无法访问 YouTube API/.test(s)) {
+        return "无法直连 YouTube Data API。检查出网，或临时设置 YOUTUBE_API_PROXY（与字幕 ALL_PROXY 分开）。";
+      }
+      if (/video_unavailable/.test(s)) {
+        return "视频不存在、已删除或设为私密（不是代理问题）。";
+      }
+      if (/\b429\b|Too Many Requests|rate.?limit|限流|RequestBlocked|IpBlocked|blocking requests from your IP|cloud provider|机房 IP/i.test(s)
+          || (/youtube-transcript-api/i.test(s) && /block/i.test(s))) {
+        return "字幕拉取被限流或出口受限，已降级为标题/简介+评论；可稍后单条重试或保持跳过字幕。";
+      }
+      if (/按产品策略未拉取字幕|仅标题\/简介/.test(s)) {
+        return "按产品策略未拉取字幕：内容侧重标题/简介，评论分析照常。";
+      }
+      if (/该视频没有任何可用字幕轨|字幕接口失败|字幕轨存在但内容为空/.test(s)) {
+        return "未拿到可用字幕，已降级为标题/简介为主的内容分析；评论分析照常。";
+      }
+      return s;
+    }
+
+    function apiRoot() {
+      return new URL("api", document.baseURI).pathname.replace(/\/$/, "");
+    }
+
+    const STEPS = [
+      { t: "校验 URL", s: "解析视频 ID" },
+      { t: "拉取元数据", s: "标题 / 播放 / 时长" },
+      { t: "字幕/评论", s: "公开接口抓取" },
+      { t: "内容拆解", s: "开场 · 展开 · 收束" },
+      { t: "口碑聚合", s: "反应与主题" }
+    ];
+
+    // DATA fixture lookup removed from production path (T035)
+    const input = document.getElementById("urlInput");
+    const urlCard = document.getElementById("urlCard");
+    const goBtn = document.getElementById("goBtn");
+    const analysisSession = createAnalysisSession({ goBtn: goBtn });
+    const channelSession = createChannelSession({ goBtn: goBtn });
+
+    const batchSession = createBatchSession({});
+    const batchUrls = document.getElementById("batchUrls");
+    const batchFile = document.getElementById("batchFile");
+    const batchGoBtn = document.getElementById("batchGoBtn");
+    const batchAbortBtn = document.getElementById("batchAbortBtn");
+    const batchConcurrency = document.getElementById("batchConcurrency");
+    const batchForce = document.getElementById("batchForce");
+    const batchSkipCaptions = document.getElementById("batchSkipCaptions");
+      const batchCaptionHint = document.getElementById("batchCaptionHint");
+      function syncBatchCaptionHint() {
+        if (!batchCaptionHint || !batchSkipCaptions) return;
+        // 勾选跳过字幕 → 提示变淡；取消勾选（要拉字幕）→ 高亮提醒耗时
+        batchCaptionHint.style.opacity = batchSkipCaptions.checked ? "0.55" : "1";
+        batchCaptionHint.style.fontWeight = batchSkipCaptions.checked ? "normal" : "600";
+      }
+      if (batchSkipCaptions) {
+        batchSkipCaptions.addEventListener("change", syncBatchCaptionHint);
+        syncBatchCaptionHint();
+      }
+    const batchSummary = document.getElementById("batchSummary");
+    const batchTableBody = document.getElementById("batchTableBody");
+    const batchExportCsv = document.getElementById("batchExportCsv");
+    const batchExportJsonl = document.getElementById("batchExportJsonl");
+
+    function batchStatusClass(st) {
+      if (st === "completed" || st === "cache_hit" || st === "degraded") return "ok";
+      if (st === "failed" || st === "cancelled") return "bad";
+      if (st === "analyzing") return "run";
+      if (st === "queued") return "queue";
+      return "warn";
+    }
+
+    function renderBatchBoard(recs, meta) {
+      meta = meta || {};
+      const total = recs.length;
+      let ok = 0, fail = 0, run = 0;
+      recs.forEach(r => {
+        if (r.status === "completed" || r.status === "cache_hit" || r.status === "degraded") ok++;
+        else if (r.status === "failed" || r.status === "cancelled") fail++;
+        else run++;
+      });
+      if (batchSummary) {
+        batchSummary.textContent = (meta.runId ? ("run " + meta.runId + " · ") : "")
+          + "共 " + total + " · 成功 " + ok + " · 失败 " + fail + " · 进行中/排队 " + run
+          + (meta.busy ? " · 跑批中…" : "");
+      }
+      if (batchTableBody) {
+        batchTableBody.innerHTML = recs.map((r, i) => {
+          const title = (r.result && r.result.video && r.result.video.title) || "";
+          const click = (r.status === "completed" || r.status === "cache_hit" || r.status === "degraded") && r.result ? " clickable" : "";
+          const ms = r.latency_ms != null ? (Math.round(r.latency_ms / 100) / 10) + "s" : "—";
+          return `<tr class="${click.trim()}" data-batch-idx="${i}">
+            <td>${i + 1}</td>
+            <td><code>${escapeHtml(r.video_id || "")}</code></td>
+            <td><span class="st-pill ${batchStatusClass(r.status)}">${escapeHtml(r.status || "")}</span></td>
+            <td>${escapeHtml(r.step_label || "")}</td>
+            <td>${escapeHtml(title)}</td>
+            <td>${escapeHtml(ms)}</td>
+          </tr>`;
+        }).join("");
+      }
+      const done = !meta.busy && total > 0;
+      if (batchExportCsv) batchExportCsv.disabled = !done;
+      if (batchExportJsonl) batchExportJsonl.disabled = !done;
+      if (batchGoBtn) batchGoBtn.style.display = meta.busy ? "none" : "";
+      if (batchAbortBtn) batchAbortBtn.style.display = meta.busy ? "" : "none";
+    }
+
+    async function startBatch() {
+      if (!batchSession || batchSession.isBusy()) return;
+      const items = batchSession.parseUrlList(batchUrls && batchUrls.value);
+      if (!items.length) {
+        toast("请先粘贴或上传至少一条有效 URL");
+        return;
+      }
+      analysisSession.abort();
+      channelSession.abort();
+      showState("batch");
+      renderBatchBoard(items.map(it => ({ video_id: it.video_id, url: it.url, status: "queued", step_label: "排队" })), { busy: true, runId: "" });
+      await batchSession.run(items, {
+        concurrency: Number(batchConcurrency && batchConcurrency.value) || 2,
+        force: !!(batchForce && batchForce.checked),
+        skipCaptions: batchSkipCaptions ? !!batchSkipCaptions.checked : true,
+        onUpdate: renderBatchBoard,
+      });
+      toast("批量结束，可导出 CSV / JSONL");
+    }
+
+    if (batchGoBtn) batchGoBtn.addEventListener("click", () => { startBatch().catch(e => toast(String(e && e.message ? e.message : e))); });
+    if (batchAbortBtn) batchAbortBtn.addEventListener("click", () => { batchSession.abort(); toast("已请求停止"); });
+    if (batchExportCsv) batchExportCsv.addEventListener("click", () => batchSession.exportCompareCsv());
+    if (batchExportJsonl) batchExportJsonl.addEventListener("click", () => batchSession.exportJsonl());
+    if (batchFile) batchFile.addEventListener("change", async () => {
+      const f = batchFile.files && batchFile.files[0];
+      if (!f) return;
+      const text = await f.text();
+      if (batchUrls) batchUrls.value = text;
+      batchFile.value = "";
+      toast("已载入 " + f.name);
+    });
+    if (batchTableBody) batchTableBody.addEventListener("click", (ev) => {
+      const tr = ev.target.closest("tr[data-batch-idx]");
+      if (!tr) return;
+      const i = Number(tr.getAttribute("data-batch-idx"));
+      const recs = batchSession.getRecords();
+      const rec = recs[i];
+      if (!rec || !rec.result) return;
+      const adapted = adaptAnalysisResult(rec.result);
+      if (!adapted) return;
+      adapted.canonicalUrl = rec.url;
+      showState("results");
+      renderResults(adapted);
+    });
+
+    let uiMode = "video"; // video | channel | batch
+    let activeChannelTaskId = null;
+    let lastChannelView = null;
+    const pageTitle = document.getElementById("pageTitle");
+    const pagePill = document.getElementById("pagePill");
+    const railVideo = document.getElementById("railVideo");
+    const railChannel = document.getElementById("railChannel");
+    const modeCtrl = document.getElementById("modeCtrl");
+    const emptyTitle = document.getElementById("emptyTitle");
+    const emptyDesc = document.getElementById("emptyDesc");
+    const chipsVideo = document.getElementById("chipsVideo");
+    const chipsChannel = document.getElementById("chipsChannel");
+
+    const PLACEHOLDER_VIDEO = "粘贴 YouTube 视频链接，例如 https://www.youtube.com/watch?v=…";
+    const PLACEHOLDER_CHANNEL = "粘贴频道主页 / @handle / UC…，例如 https://www.youtube.com/@…";
+    const INVALID_CHANNEL_TITLE = "无法解析为合法 YouTube 频道，不创建任务";
+    const INVALID_CHANNEL_DETAIL = "需要频道主页、@handle 或 UC 频道 ID。视频链接请切到「单视频」模式。当前输入未识别，分析未启动。";
+
+    function looksLikeChannelUrl(raw) {
+      if (!raw) return false;
+      const s = raw.trim();
+      if (/^@[\w.-]+$/.test(s)) return true;
+      if (/^UC[\w-]{20,}$/.test(s)) return true;
+      if (/youtube\.com\/@[\w.-]+/i.test(s)) return true;
+      if (/youtube\.com\/channel\/UC[\w-]{20,}/i.test(s)) return true;
+      if (/youtube\.com\/c\/[\w.-]+/i.test(s)) return true;
+      if (/youtube\.com\/user\/[\w.-]+/i.test(s)) return true;
+      return false;
+    }
+
+    function setMode(mode) {
+      if (mode !== "video" && mode !== "channel" && mode !== "batch") return;
+      if (mode === uiMode) {
+        // still sync UI
+      } else {
+        if (mode === "channel") analysisSession.abort();
+        else if (mode === "video") channelSession.abort();
+        else { analysisSession.abort(); channelSession.abort(); }
+        if (mode !== "batch" && typeof batchSession !== "undefined" && batchSession.isBusy()) batchSession.abort();
+        uiMode = mode;
+        showState(mode === "batch" ? "batch" : "empty");
+        lastShownId = null;
+        lastChannelView = null;
+        activeChannelTaskId = null;
+        input.classList.remove("invalid");
+      }
+      uiMode = mode;
+      modeCtrl.querySelectorAll("button").forEach(b => {
+        b.classList.toggle("on", b.getAttribute("data-mode") === mode);
+      });
+      if (railVideo) railVideo.classList.toggle("active", mode === "video");
+      if (railChannel) railChannel.classList.toggle("active", mode === "channel");
+      if (pageTitle) {
+        pageTitle.textContent = mode === "channel"
+          ? "KOL 达人搜索 · 频道分析"
+          : "KOL 达人搜索 · 单视频分析";
+      }
+      if (pagePill) {
+        pagePill.textContent = mode === "channel" ? "MVP·频道" : "MVP·单视频";
+      }
+      input.placeholder = mode === "channel" ? PLACEHOLDER_CHANNEL : PLACEHOLDER_VIDEO;
+      if (emptyTitle) {
+        emptyTitle.textContent = mode === "channel"
+          ? "粘贴一个 YouTube 频道开始抽样简报"
+          : "粘贴一条 YouTube 链接开始分析";
+      }
+      if (emptyDesc) {
+        emptyDesc.textContent = mode === "channel"
+          ? "点击下方 @handle 只回填 URL，仍走真实频道分析，不跳过。"
+          : "点击下方样例只回填 URL，仍走校验与真实分析，不跳过。";
+      }
+      if (chipsVideo) chipsVideo.classList.toggle("hidden", mode !== "video");
+      if (chipsChannel) chipsChannel.classList.toggle("hidden", mode !== "channel");
+      if (urlCard) urlCard.classList.toggle("batch-on", mode === "batch");
+      if (pageTitle && mode === "batch") pageTitle.textContent = "KOL 达人搜索 · 批量回测";
+      if (pagePill && mode === "batch") pagePill.textContent = "MVP·批量";
+      if (emptyTitle && mode === "batch") emptyTitle.textContent = "批量导入 URL，跑完可导出对照 CSV";
+      if (emptyDesc && mode === "batch") emptyDesc.textContent = "每行一条链接；分析中可在任务板查看进度，完成后导出。";
+      if (chipsVideo && mode === "batch") chipsVideo.classList.add("hidden");
+      if (chipsChannel && mode === "batch") chipsChannel.classList.add("hidden");
+      if (railVideo) railVideo.classList.toggle("active", mode === "video");
+      if (railChannel) railChannel.classList.toggle("active", mode === "channel");
+    }
+
+    const states = {
+      empty: document.getElementById("stateEmpty"),
+      analyzing: document.getElementById("stateAnalyzing"),
+      error: document.getElementById("stateError"),
+      results: document.getElementById("stateResults"),
+      batch: document.getElementById("stateBatch")
+    };
+    const cache = new Map();
+    let lastShownId = null;
+    let viewingCanonicalUrl = null;
+    let activeHistoryId = null;
+    let historyItems = [];
+
+    function parseYouTubeId(raw) {
+      if (!raw) return null;
+      const s = raw.trim();
+      let m = s.match(/youtube\.com\/watch\?[^#]*v=([A-Za-z0-9_-]{11})/i);
+      if (m) return m[1];
+      m = s.match(/youtu\.be\/([A-Za-z0-9_-]{11})/i);
+      if (m) return m[1];
+      m = s.match(/youtube\.com\/(?:shorts|embed|live|v)\/([A-Za-z0-9_-]{11})/i);
+      if (m) return m[1];
+      return null;
+    }
+
+    const INVALID_URL_TITLE = "无法解析为合法 YouTube 视频，不创建任务";
+    const INVALID_URL_DETAIL = "需要包含 youtube.com/watch?v= 或 youtu.be/、/shorts/、/embed/、/live/ 及有效视频 ID。当前输入未识别，分析未启动。";
+
+    function setErrorCopy(title, detail) {
+      const h = states.error.querySelector("h3");
+      const p = states.error.querySelector("p");
+      if (h) h.textContent = title;
+      if (p) p.textContent = detail || "";
+    }
+
+    function showInvalidUrlError() {
+      setErrorCopy(INVALID_URL_TITLE, INVALID_URL_DETAIL);
+      showState("error");
+      lastShownId = null;
+    }
+
+    function showTaskFailError(payload) {
+      const rawErr = payload && payload.error;
+      const err = (rawErr && typeof rawErr === "object") ? rawErr : {};
+      const code = err.code || (payload && payload.error_code);
+      const msg = err.message || (typeof rawErr === "string" ? rawErr : null) || (payload && payload.error_message) || "分析失败";
+      const title = code ? ("分析失败（" + code + "）") : "分析失败";
+      setErrorCopy(title, msg);
+      showState("error");
+      lastShownId = null;
+    }
+
+    function showState(name) {
+      Object.keys(states).forEach(k => states[k].classList.toggle("hidden", k !== name));
+    }
+
+    function toast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => el.classList.remove("show"), 2200);
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
+      }[c]));
+    }
+
+    function openDrawer(title, html) {
+      document.getElementById("drawerTitle").textContent = title;
+      document.getElementById("drawerBody").innerHTML = html;
+      document.getElementById("overlay").classList.add("show");
+      document.getElementById("drawer").classList.add("show");
+    }
+    function closeDrawer() {
+      document.getElementById("overlay").classList.remove("show");
+      document.getElementById("drawer").classList.remove("show");
+    }
+    document.getElementById("overlay").addEventListener("click", closeDrawer);
+    document.getElementById("drawerClose").addEventListener("click", closeDrawer);
+    document.addEventListener("keydown", e => { if (e.key === "Escape") closeDrawer(); });
+
+    function meterColor(key) {
+      return { open: "var(--hook)", develop: "var(--body)", close: "var(--cta)" }[key] || "var(--accent)";
+    }
+    function frameClass(key) {
+      return { open: "open", develop: "develop", close: "close" }[key] || "develop";
+    }
+
+    function renderResults(d, opts) {
+      opts = opts || {};
+      const progressing = !!(opts.progressing || d.is_preview);
+      lastShownId = d.id;
+      if (d.canonicalUrl) viewingCanonicalUrl = d.canonicalUrl;
+      const sent = d.sentiment;
+      const segs = d.segs.map(seg => {
+        const tags = [];
+        if (seg.ctaType) tags.push(`<span class="mini cta">CTA · ${escapeHtml(seg.ctaType)}</span>`);
+        if (seg.adOverlay) tags.push(`<span class="mini ad">轻微提及</span>`);
+        return `
+        <button class="seg" type="button" data-seg="${seg.key}">
+          <div class="seg-top">
+            <span class="frame ${frameClass(seg.key)}">${escapeHtml(seg.name)}</span>
+            <span class="conf">${seg.conf.toFixed(2)}</span>
+          </div>
+          <div class="meter"><i style="width:${Math.round(seg.conf*100)}%;background:${meterColor(seg.key)}"></i></div>
+          <p>${escapeHtml(seg.text)}</p>
+          ${tags.length ? `<div class="seg-tags">${tags.join("")}</div>` : ""}
+          <div class="more">查看对应字幕片段 →</div>
+        </button>`;
+      }).join("");
+
+      const reactions = d.reactions.map((r, i) =>
+        `<button class="rchip" type="button" data-reaction="${i}">${escapeHtml(r.name)}<span class="n">${r.n}</span></button>`
+      ).join("");
+
+      const themes = d.themes.map((th, i) =>
+        `<button class="tchip" type="button" data-theme="${i}">${escapeHtml(th.name)}</button>`
+      ).join("");
+
+      const lows = d.lowConf.map(x =>
+        `<div class="lc-item"><span>${escapeHtml(x.t)}</span><span class="sc">${escapeHtml(x.sc)}</span></div>`
+      ).join("");
+      const revs = d.review.map(x =>
+        `<div class="lc-item"><span>${escapeHtml(x.t)}</span><span class="sc">${escapeHtml(x.sc)}</span></div>`
+      ).join("");
+
+      const cc = d.contentConclusion;
+      const kc = d.commentConclusion;
+      const typePills = cc.types.map(t => `<span class="type-pill">${escapeHtml(t)}</span>`).join("");
+      const commercialRow = cc.commercial
+        ? `<div class="crow"><div class="rk">商业</div><div>${escapeHtml(cc.commercial)}</div></div>`
+        : "";
+
+      states.results.innerHTML = `
+        <div class="results">
+          ${progressing ? `<div class="progress-banner" id="resultsProgressBanner">口碑聚合进行中：基础数据已展示，内容拆解与评论口碑写入后会自动刷新。<span class="progress-pulse"></span></div>` : ""}
+          <section class="zone">
+            <div class="zone-h">
+              <h3><span class="zn">1</span>运行健康</h3>
+              <div class="zone-h-actions">
+                ${d.is_fixture ? '<span class="badge-sample">示例数据</span>' : ''}
+                <button class="btn-refresh" type="button" data-refresh="1">刷新</button>
+              </div>
+            </div>
+            <div class="health-row">
+              <span class="status"><i class="dot ok"></i>${escapeHtml(d.health.overall)}</span>
+              <span class="status"><i class="dot ${d.health.source.level}"></i>${escapeHtml(d.health.source.text)}</span>
+              <span class="status"><i class="dot ${d.health.llm.level}"></i>${escapeHtml(d.health.llm.text)}</span>
+            </div>
+            <div class="health-sub">
+              ${d.health.notes.map(n => `<span>${escapeHtml(n)}</span>`).join("")}
+            </div>
+          </section>
+
+          <section class="zone">
+            <div class="zone-h">
+              <h3><span class="zn">2</span>对照总述</h3>
+              <span class="meta-note">内容意图 · 评论回收 · 仅陈述事实</span>
+            </div>
+            <div class="contrast-grid">
+              <div class="contrast-col">
+                <div class="lab say">内容说的</div>
+                <p>${escapeHtml(d.contrast.content)}</p>
+              </div>
+              <div class="contrast-col">
+                <div class="lab reply">评论回的</div>
+                <p>${escapeHtml(d.contrast.comments)}</p>
+              </div>
+            </div>
+            <div class="contrast-sent">${escapeHtml(d.contrast.sentence)}</div>
+            <div class="fresh">${d.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("")}</div>
+          </section>
+
+          <section class="zone">
+            <div class="zone-h">
+              <h3><span class="zn">3</span>硬指标</h3>
+              <span class="meta-note">${escapeHtml(d.fetched)}</span>
+            </div>
+            <div style="font-size:13px;color:var(--muted);margin:-4px 0 12px;">
+              ${escapeHtml(d.title)} · ${escapeHtml(d.channel)}
+            </div>
+            <div class="metrics">
+              ${d.metrics.map(m => `<div class="metric"><div class="k">${escapeHtml(m.k)}</div><div class="v">${escapeHtml(m.v)}</div><div class="u">${escapeHtml(m.u)}</div></div>`).join("")}
+            </div>
+          </section>
+
+          <section class="zone">
+            <div class="zone-h">
+              <h3><span class="zn">4</span>内容拆解</h3>
+              <span class="meta-note">开场 / 展开 / 收束 · 点击查看字幕</span>
+            </div>
+            <div class="segs">${segs}</div>
+            <div class="conclude">
+              <div class="conclude-lab">结论</div>
+              <h4>内容结论</h4>
+              <div class="crow"><div class="rk">类型</div><div class="type-pills">${typePills}</div></div>
+              <div class="crow"><div class="rk">在说什么</div><div>${escapeHtml(cc.thesis)}</div></div>
+              <div class="crow"><div class="rk">语气</div><div>${escapeHtml(cc.tone)}</div></div>
+              ${commercialRow}
+              <div class="conclude-meta">
+                <span class="tag">置信 ${escapeHtml(cc.confidence)}</span>
+                <span class="tag">${escapeHtml(cc.coverage)}</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="zone">
+            <div class="zone-h">
+              <h3><span class="zn">5</span>评论口碑</h3>
+              <span class="meta-note">点击反应类型或主题查看示例评论</span>
+            </div>
+            <div class="sent-bar">
+              <button class="pos" type="button" data-sent="pos" style="flex:${sent.pos}" title="正面 ${sent.pos}%"></button>
+              <button class="neu" type="button" data-sent="neu" style="flex:${sent.neu}" title="中性 ${sent.neu}%"></button>
+              <button class="neg" type="button" data-sent="neg" style="flex:${sent.neg}" title="负面 ${sent.neg}%"></button>
+            </div>
+            <div class="legend">
+              <span><i class="sw" style="background:var(--pos)"></i>正面 <b>${sent.pos}%</b></span>
+              <span><i class="sw" style="background:#64748b"></i>中性 <b>${sent.neu}%</b></span>
+              <span><i class="sw" style="background:var(--neg)"></i>负面 <b>${sent.neg}%</b></span>
+            </div>
+            <div class="sublab">反应类型</div>
+            <div class="rchips">${reactions}</div>
+            <div class="sublab">出现的主题</div>
+            <div class="themes">${themes}</div>
+            <div class="quotes">
+              <div class="quote">
+                <div class="ql pos">高赞正面</div>
+                <p>「${escapeHtml(d.posQuote.t)}」</p>
+                <div class="lk">👍 ${escapeHtml(d.posQuote.like)} · 示例评论</div>
+              </div>
+              <div class="quote">
+                <div class="ql neg">高赞负面</div>
+                <p>「${escapeHtml(d.negQuote.t)}」</p>
+                <div class="lk">👍 ${escapeHtml(d.negQuote.like)} · 示例评论</div>
+              </div>
+            </div>
+            <div class="split">
+              <div class="list-card">
+                <h4>孤立低置信 5 条</h4>
+                ${lows}
+                <div class="noise">${escapeHtml(d.noise)}</div>
+              </div>
+              <div class="list-card">
+                <h4>待人工确认</h4>
+                ${revs}
+              </div>
+            </div>
+            <div class="conclude comment">
+              <div class="conclude-lab">结论</div>
+              <h4>评论结论</h4>
+              <div class="crow"><div class="rk">在做什么</div><div>${escapeHtml(kc.doing)}</div></div>
+              <div class="crow"><div class="rk">冒出主题</div><div>${escapeHtml(kc.themes)}</div></div>
+              <div class="crow"><div class="rk">是否对齐</div><div>${escapeHtml(kc.match)}</div></div>
+              <div class="conclude-meta">
+                <span class="tag">置信 ${escapeHtml(kc.confidence)}</span>
+                <span class="tag">${escapeHtml(kc.sample)}</span>
+              </div>
+            </div>
+          </section>
+        </div>`;
+
+      showState("results");
+      const refreshBtn = states.results.querySelector("[data-refresh]");
+      if (refreshBtn) refreshBtn.addEventListener("click", refreshCurrent);
+
+      states.results.querySelectorAll("[data-seg]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const seg = d.segs.find(s => s.key === btn.dataset.seg);
+          const lines = seg.quotes.map(q =>
+            `<div class="mockline"><span class="ts">${escapeHtml(q.ts)}</span>${escapeHtml(q.t)}</div>`
+          ).join("");
+          const extra = seg.adOverlay
+            ? `<div class="mockline"><span class="ts">提及</span>${escapeHtml(seg.adOverlay)}</div>`
+            : "";
+          openDrawer(`${seg.name} · 对应字幕片段`,
+            `${d.is_fixture ? '<div class="sample-flag">示例数据 · 非真实字幕回放</div>' : ''}${lines}${extra}`);
+        });
+      });
+      states.results.querySelectorAll("[data-sent]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const key = btn.dataset.sent;
+          const label = { pos: "正面评论", neu: "中性评论", neg: "负面评论" }[key];
+          const lines = d.sentComments[key].map(t =>
+            `<div class="mockline">${escapeHtml(t)}</div>`
+          ).join("");
+          openDrawer(label, `${d.is_fixture ? '<div class="sample-flag">示例数据 · 每类展示 3 条</div>' : ''}${lines}`);
+        });
+      });
+      states.results.querySelectorAll("[data-reaction]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const r = d.reactions[Number(btn.dataset.reaction)];
+          const lines = r.comments.map(t => `<div class="mockline">${escapeHtml(t)}</div>`).join("");
+          openDrawer(`反应 · ${r.name}`, `${d.is_fixture ? '<div class="sample-flag">示例数据 · 该反应类型下 3 条评论</div>' : ''}${lines}`);
+        });
+      });
+      states.results.querySelectorAll("[data-theme]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const th = d.themes[Number(btn.dataset.theme)];
+          const lines = th.comments.map(t => `<div class="mockline">${escapeHtml(t)}</div>`).join("");
+          openDrawer(`主题 · ${th.name}`, `${d.is_fixture ? '<div class="sample-flag">示例数据 · 主题下评论</div>' : ''}${lines}`);
+        });
+      });
+    }
+
+    function buildSteps() {
+      const wrap = document.getElementById("steps");
+      wrap.innerHTML = STEPS.map((st, i) =>
+        `<div class="step" data-i="${i}"><div class="n">${i+1}</div><div class="t">${st.t}</div><div class="s">${st.s}</div></div>`
+      ).join("");
+    }
+    buildSteps();
+
+    function setStepUI(step) {
+      const bar = document.getElementById("progBar");
+      const hint = document.getElementById("analyzingHint");
+      const nodes = [...document.querySelectorAll("#steps .step")];
+      const i = Math.max(0, Math.min(Number(step) || 0, STEPS.length - 1));
+      nodes.forEach((n, idx) => {
+        n.classList.toggle("done", idx < i);
+        n.classList.toggle("active", idx === i);
+      });
+      hint.textContent = STEPS[i].t + "…";
+      bar.style.width = `${Math.round(((i + 0.35) / STEPS.length) * 100)}%`;
+    }
+
+    function finishSteps() {
+      const bar = document.getElementById("progBar");
+      const hint = document.getElementById("analyzingHint");
+      const nodes = [...document.querySelectorAll("#steps .step")];
+      nodes.forEach(n => { n.classList.add("done"); n.classList.remove("active"); });
+      bar.style.width = "100%";
+      hint.textContent = "聚合完成";
+    }
+
+
+    function askTranscriptChoice() {
+      return new Promise((resolve) => {
+        const modal = document.getElementById("transcriptModal");
+        const overlay = document.getElementById("choiceOverlay");
+        const skipBtn = document.getElementById("choiceSkip");
+        const contBtn = document.getElementById("choiceContinue");
+        function close(val) {
+          modal.classList.remove("show");
+          overlay.classList.remove("show");
+          skipBtn.onclick = null;
+          contBtn.onclick = null;
+          resolve(val);
+        }
+        skipBtn.onclick = () => close(true);
+        contBtn.onclick = () => close(false);
+        overlay.onclick = (e) => { e.preventDefault(); };
+        modal.classList.add("show");
+        overlay.classList.add("show");
+      });
+    }
+
+    async function postTranscriptChoice(taskId, skip) {
+      const res = await fetch(apiRoot() + "/v1/analyses/" + encodeURIComponent(taskId) + "/transcript-choice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ skip: !!skip }),
+      });
+      return res;
+    }
+
+    async function pollTask(taskId) {
+      showState("analyzing");
+      setStepUI(0);
+      let keepSession = false;
+      while (true) {
+      const outcome = await analysisSession.poll(taskId, {
+        keepSession: keepSession,
+        onProgress: (body) => {
+          if (body && body.current_step != null) setStepUI(body.current_step);
+          if (body && body.current_step_label) {
+            const hint = document.getElementById("analyzingHint");
+            if (hint) hint.textContent = body.current_step_label;
+          }
+          // 进入口碑聚合(step>=4)：先跳结果页展示基础数据，完成后由 submit 再填全量
+          const step = body && body.current_step != null ? Number(body.current_step) : 0;
+          const st = body && body.status;
+          if (
+            st === "analyzing" &&
+            step >= 4 &&
+            body.preview &&
+            !body.result
+          ) {
+            const adapted = adaptAnalysisResult(body.preview);
+            if (adapted) {
+              adapted.is_preview = true;
+              if (viewingCanonicalUrl) adapted.canonicalUrl = viewingCanonicalUrl;
+              showState("results");
+              renderResults(adapted, { progressing: true });
+            }
+          }
+        }
+      });
+      if (outcome.cancelled) return { cancelled: true };
+      if (outcome.awaiting === "transcript_choice") {
+        const skip = await askTranscriptChoice();
+        try {
+          await postTranscriptChoice(taskId, skip);
+        } catch (e) {
+          return { status: "failed", error: { code: "transcript_choice", message: humanizeBackendError(String(e && e.message ? e.message : e)) } };
+        }
+        keepSession = true;
+        continue;
+      }
+      if (outcome.timeout) {
+        return {
+          status: "failed",
+          error: { code: "poll_timeout", message: "分析超时（超过 600 秒），已停止等待" }
+        };
+      }
+      if (!outcome.ok) {
+        let msg = "网络错误";
+        if (outcome.body && (outcome.body.message || (outcome.body.error && outcome.body.error.message))) {
+          msg = outcome.body.message || outcome.body.error.message;
+        } else if (outcome.error) {
+          msg = String(outcome.error.message || outcome.error);
+        }
+        return { status: "failed", error: { code: "poll_error", message: msg } };
+      }
+      const body = outcome.body;
+      if (body && (body.status === "completed" || body.status === "cache_hit")) {
+        finishSteps();
+      }
+      return body;
+      }
+    }
+
+    async function submit() {
+      if (goBtn.disabled) return;
+      input.classList.remove("invalid");
+      urlCard.classList.remove("shake");
+      const raw = input.value.trim();
+      if (!raw) {
+        input.classList.add("invalid");
+        void urlCard.offsetWidth;
+        urlCard.classList.add("shake");
+        input.focus();
+        return;
+      }
+      try {
+        analysisSession.abort();
+        const res = await fetch(apiRoot() + "/v1/analyses", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: raw }),
+        });
+        const body = await res.json();
+        if (res.status === 400) {
+          showInvalidUrlError();
+          return;
+        }
+        if (res.status === 200 && body.cache_hit) {
+          toast("命中缓存，直接返回上次结果");
+          viewingCanonicalUrl = raw;
+          activeHistoryId = body.task_id || null;
+          const adapted = adaptAnalysisResult(body.result);
+          if (!adapted) return;
+          adapted.canonicalUrl = raw;
+          renderResults(adapted);
+          return;
+        }
+        if (res.status === 202) {
+          viewingCanonicalUrl = raw;
+          activeHistoryId = body.task_id || null;
+          const done = await pollTask(body.task_id);
+          if (!done || done.cancelled) return;
+          if (done.status === "failed" && !done.result) {
+            showTaskFailError(done);
+            return;
+          }
+          if (done.result) {
+            viewingCanonicalUrl = raw;
+            activeHistoryId = done.task_id || body.task_id || null;
+            const adapted = adaptAnalysisResult(done.result);
+            adapted.canonicalUrl = raw;
+            renderResults(adapted);
+          } else {
+            showTaskFailError(done);
+          }
+          return;
+        }
+        showTaskFailError(body);
+      } catch (e) {
+        setErrorCopy("分析失败", String(e && e.message ? e.message : e));
+        showState("error");
+        lastShownId = null;
+      }
+    }
+
+
+    function relativeTime(iso) {
+      if (!iso) return "";
+      const t = Date.parse(iso);
+      if (Number.isNaN(t)) return iso;
+      const sec = Math.max(0, (Date.now() - t) / 1000);
+      if (sec < 60) return "刚刚";
+      if (sec < 3600) return Math.floor(sec / 60) + " 分钟前";
+      if (sec < 86400) return Math.floor(sec / 3600) + " 小时前";
+      const days = Math.floor(sec / 86400);
+      if (days < 7) return days + " 天前";
+      return iso.slice(0, 10);
+    }
+
+    function closeHistory() {
+      document.getElementById("histPanel").classList.remove("show");
+      document.getElementById("histOverlay").classList.remove("show");
+      document.getElementById("histBtn").classList.remove("active");
+    }
+    function openHistory() {
+      document.getElementById("histPanel").classList.add("show");
+      document.getElementById("histOverlay").classList.add("show");
+      document.getElementById("histBtn").classList.add("active");
+      loadHistory();
+    }
+
+    function renderHistoryList() {
+      const body = document.getElementById("histBody");
+      const hint = document.getElementById("histHint");
+      if (!historyItems.length) {
+        hint.textContent = "暂无已完成或失败的分析";
+        body.innerHTML = '<div class="hist-empty">还没有历史记录。分析完成后会出现在这里。</div>';
+        return;
+      }
+      hint.textContent = "最近 " + historyItems.length + " 条 · 点击行查看结果，不填入链接";
+      body.innerHTML = historyItems.map(rec => {
+        const active = rec.task_id === activeHistoryId ? " active" : "";
+        const st = rec.status === "completed"
+          ? '<span class="hist-st ok">完成</span>'
+          : '<span class="hist-st bad">失败</span>';
+        const types = (rec.video_types || []).slice(0, 2);
+        const type = types.length
+          ? types.map(t => '<span class="hist-type">' + escapeHtml(t) + '</span>').join(" ")
+          : "";
+        return `
+          <button class="hist-row${active}" type="button" data-hist="${escapeHtml(rec.task_id)}">
+            <div class="hist-main">
+              <div class="hist-title">${escapeHtml(rec.title || rec.video_id || "未命名视频")}</div>
+              <div class="hist-sub">${escapeHtml(rec.summary || "")}</div>
+              ${type}
+            </div>
+            <div class="hist-right">
+              <span class="hist-time">${escapeHtml(relativeTime(rec.created_at))}</span>
+              ${st}
+            </div>
+          </button>`;
+      }).join("");
+      body.querySelectorAll("[data-hist]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-hist");
+          const rec = historyItems.find(x => x.task_id === id);
+          if (rec) openHistoryRecord(rec);
+        });
+      });
+    }
+
+    async function loadHistory() {
+      try {
+        const res = await fetch(apiRoot() + "/v1/analyses?limit=50");
+        const body = await res.json();
+        historyItems = Array.isArray(body.items) ? body.items : [];
+      } catch (e) {
+        historyItems = [];
+      }
+      renderHistoryList();
+    }
+
+    function renderHistoryFailure(rec) {
+      lastShownId = null;
+      viewingCanonicalUrl = rec.canonical_url || null;
+      const title = rec.title || "无法获取的视频";
+      const sub = rec.summary || (rec.error && rec.error.message) || "分析未完成";
+      states.error.innerHTML = `
+        <div class="error">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fca5a5" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5h.01"/></svg>
+          <div>
+            <h3>${escapeHtml(title)}</h3>
+            <p>${escapeHtml(sub)}。分析未完成，没有可展示的五区结果。</p>
+            <div class="err-actions">
+              <button class="btn-refresh" type="button" data-fail-refresh="1">刷新</button>
+            </div>
+          </div>
+        </div>`;
+      showState("error");
+      const btn = states.error.querySelector("[data-fail-refresh]");
+      if (btn) btn.addEventListener("click", refreshCurrent);
+    }
+
+    async function openHistoryRecord(rec) {
+      analysisSession.abort();
+      activeHistoryId = rec.task_id;
+      viewingCanonicalUrl = rec.canonical_url || null;
+      renderHistoryList();
+      closeHistory();
+      if (rec.status === "failed") {
+        renderHistoryFailure(rec);
+        return;
+      }
+      try {
+        const res = await fetch(apiRoot() + "/v1/analyses/" + encodeURIComponent(rec.task_id));
+        const body = await res.json();
+        if (body.status === "failed" || !body.result) {
+          renderHistoryFailure({
+            title: rec.title,
+            summary: (body.error && body.error.message) || rec.summary || "找不到该条分析数据",
+            canonical_url: rec.canonical_url,
+            error: body.error
+          });
+          return;
+        }
+        const adapted = adaptAnalysisResult(body.result);
+        adapted.canonicalUrl = rec.canonical_url;
+        renderResults(adapted);
+      } catch (e) {
+        renderHistoryFailure({
+          title: rec.title,
+          summary: String(e && e.message ? e.message : e),
+          canonical_url: rec.canonical_url
+        });
+      }
+    }
+
+    async function refreshCurrent() {
+      analysisSession.abort();
+      const rec = historyItems.find(h => h.task_id === activeHistoryId);
+      const storedUrl = (rec && rec.canonical_url) || viewingCanonicalUrl;
+      if (!storedUrl) {
+        toast("没有可刷新的链接");
+        return;
+      }
+      try {
+        const res = await fetch(apiRoot() + "/v1/analyses", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: storedUrl }),
+        });
+        const body = await res.json();
+        if (res.status === 400) {
+          toast("刷新失败：链接无效");
+          return;
+        }
+        if (res.status === 200 && body.cache_hit) {
+          toast("已用历史链接刷新，命中缓存");
+          if (body.result) {
+            const adapted = adaptAnalysisResult(body.result);
+            adapted.canonicalUrl = storedUrl;
+            renderResults(adapted);
+          }
+          return;
+        }
+        if (res.status === 202) {
+          toast("已重新请求分析");
+          const done = await pollTask(body.task_id);
+          if (!done || done.cancelled) return;
+          if (done.status === "failed" && !done.result) {
+            renderHistoryFailure({
+              title: rec ? rec.title : "无法获取的视频",
+              summary: (done.error && done.error.message) || "分析未完成",
+              canonical_url: storedUrl,
+              error: done.error
+            });
+            return;
+          }
+          if (done.result) {
+            const adapted = adaptAnalysisResult(done.result);
+            adapted.canonicalUrl = storedUrl;
+            renderResults(adapted);
+          }
+          loadHistory();
+          return;
+        }
+        toast("刷新未成功");
+      } catch (e) {
+        toast(String(e && e.message ? e.message : e));
+      }
+    }
+
+    document.getElementById("histBtn").addEventListener("click", () => {
+      const panel = document.getElementById("histPanel");
+      if (panel.classList.contains("show")) closeHistory();
+      else openHistory();
+    });
+    document.getElementById("histClose").addEventListener("click", closeHistory);
+    document.getElementById("histOverlay").addEventListener("click", closeHistory);
+
+
+
+    function channelProgressText(body) {
+      const result = body && body.result;
+      if (result && Array.isArray(result.videos) && result.videos.length) {
+        const done = result.videos.filter(v => {
+          const s = v.pipeline_status;
+          return s === "completed" || s === "degraded" || s === "failed" || s === "cache_hit";
+        }).length;
+        const total = Math.max(result.videos.length, 5);
+        return "频道样本 " + done + "/" + total;
+      }
+      if (body && body.current_step_label) return body.current_step_label;
+      if (body && body.status === "queued") return "解析频道";
+      if (body && body.status === "analyzing") return "抽样中";
+      return "频道分析中…";
+    }
+
+    function renderChannelBrief(view, opts) {
+      opts = opts || {};
+      lastChannelView = view;
+      const progressing = !!opts.progressing;
+      const progressLabel = opts.progressLabel || "";
+      const sampleNote = view.sample.metaNote;
+      const healthStatuses = view.health.statuses.map(s =>
+        `<span class="status"><i class="dot ${s.level}"></i>${escapeHtml(s.text)}</span>`
+      ).join("");
+      const healthNotes = (view.health.notes || []).map(n =>
+        `<div class="warn-line">${escapeHtml(n)}</div>`
+      ).join("");
+      const typeBars = view.contentHabits.typeBars.map((b, i) => {
+        const tone = i === 1 ? " gold" : "";
+        return `<div class="bar-row"><span class="nm">${escapeHtml(b.name)}</span><div class="track${tone}"><i style="width:${b.pct}%"></i></div><span class="n">${b.n}/${b.total}</span></div>`;
+      }).join("");
+      const extras = view.contentHabits.extras.map(b => {
+        const tone = b.tone === "purple" ? " purple" : (b.tone === "green" ? " green" : "");
+        return `<div class="bar-row"><span class="nm">${escapeHtml(b.name)}</span><div class="track${tone}"><i style="width:${b.pct}%"></i></div><span class="n">${b.n}/${b.total}</span></div>`;
+      }).join("");
+      const theses = view.contentHabits.theses.map(th =>
+        `<li><span class="mk${th.cohort === "hot" ? " hot" : ""}">${escapeHtml(th.mark)}</span><span>${escapeHtml(th.text)}</span></li>`
+      ).join('') || '<li><span class="mk">—</span><span>暂无论题</span></li>';
+
+      let audienceHtml = "";
+      if (view.audienceHabits.pos != null) {
+        const themes = view.audienceHabits.themes.map(t =>
+          `<span class="tchip">${escapeHtml(t.label)}${t.videoCount != null ? " · " + t.videoCount + " 条" : ""}</span>`
+        ).join("");
+        const reactions = view.audienceHabits.reactionTypes.map(r =>
+          `<span class="rchip">${escapeHtml(r.label)}${r.shareDisplay ? `<span class="n">${escapeHtml(r.shareDisplay)}</span>` : ""}</span>`
+        ).join("");
+        const quotes = view.audienceHabits.quotes.map(q => {
+          const pol = q.polarity === "negative" ? "neg" : "pos";
+          const lab = q.polarity === "negative" ? "高赞负" : "高赞正";
+          return `<div class="quote"><div class="ql ${pol}">${lab}</div><p>${escapeHtml(q.text)}</p><div class="lk">赞 ${escapeHtml(q.likesDisplay)}${q.videoTitle ? " · " + escapeHtml(q.videoTitle) : ""}</div></div>`;
+        }).join("");
+        audienceHtml = `
+          <section class="zone">
+            <div class="zone-h"><h3><span class="zn">5</span>观众习惯</h3><span class="meta-note">情绪按各条评论数加权 · 主题需 ≥2 条视频出现</span></div>
+            <div class="sent-bar">
+              <div class="pos" style="width:${view.audienceHabits.pos || 0}%"></div>
+              <div class="neu" style="width:${view.audienceHabits.neu || 0}%"></div>
+              <div class="neg" style="width:${view.audienceHabits.neg || 0}%"></div>
+            </div>
+            <div class="legend">
+              <span><i class="sw" style="background:#22c55e"></i>正 <b>${escapeHtml(view.audienceHabits.posDisplay)}</b></span>
+              <span><i class="sw" style="background:#64748b"></i>中 <b>${escapeHtml(view.audienceHabits.neuDisplay)}</b></span>
+              <span><i class="sw" style="background:#ef4444"></i>负 <b>${escapeHtml(view.audienceHabits.negDisplay)}</b></span>
+              ${view.audienceHabits.weightedVideoCount != null ? `<span>加权样本 ${view.audienceHabits.weightedVideoCount} 条</span>` : ""}
+            </div>
+            <div class="sublab">跨视频主题（≥2 条）</div>
+            <div class="themes">${themes || '<span class="tchip">暂无</span>'}</div>
+            <div class="sublab">反应类型</div>
+            <div class="themes">${reactions || '<span class="rchip">暂无</span>'}</div>
+            ${quotes ? `<div class="quotes" style="margin-top:12px">${quotes}</div>` : ""}
+          </section>`;
+      }
+
+      let commercialHtml = "";
+      if (view.showCommercial && view.commercial) {
+        const ex = view.commercial.excerpts.map(e =>
+          `<div class="quote"><div class="ql" style="color:#d8b4fe">口播摘录</div><p>${escapeHtml(e.text)}</p><div class="lk">${escapeHtml(e.videoId)} · ${escapeHtml(e.kind)}</div></div>`
+        ).join("");
+        commercialHtml = `
+          <section class="zone">
+            <div class="zone-h"><h3><span class="zn">6</span>商业信号</h3><span class="meta-note">只复用 v1 字段 · 无公开商单/报价/付费标识</span></div>
+            <div class="metrics" style="grid-template-columns:repeat(3,1fr)">
+              <div class="metric"><div class="k">口播 commercial 非空</div><div class="v">${escapeHtml(view.commercial.nonnullDisplay)}</div><div class="u">样本内计数</div></div>
+              <div class="metric"><div class="k">贴片 ad_overlay</div><div class="v">${escapeHtml(view.commercial.adDisplay)}</div><div class="u">样本内计数</div></div>
+              <div class="metric"><div class="k">收束 CTA = 购买</div><div class="v">${escapeHtml(view.commercial.ctaDisplay)}</div><div class="u">样本内计数</div></div>
+            </div>
+            ${ex ? `<div class="quotes" style="margin-top:12px">${ex}</div>` : ""}
+            <div class="foot-hint">若样本都空，这一整块不展示。</div>
+          </section>`;
+      }
+
+      const alignZn = view.showCommercial ? "7" : "6";
+      const tableZn = view.showCommercial ? "8" : "7";
+      const opsZn = view.showCommercial ? "9" : "8";
+      const contrastSents = view.alignment.contrastSentences.map(s =>
+        `<div class="contrast-sent">${escapeHtml(s)}</div>`
+      ).join("");
+      const reviewItems = view.alignment.humanReviewItems.map(s =>
+        `<li><span class="mk">待</span><span>${escapeHtml(s)}</span></li>`
+      ).join('') || '<li><span class="mk">—</span><span>无</span></li>';
+      const negItems = view.alignment.highLikeNegatives.map(s =>
+        `<li><span class="mk">负</span><span>${escapeHtml(s)}</span></li>`
+      ).join('') || '<li><span class="mk">—</span><span>无</span></li>';
+
+      const rows = view.videos.map((v, i) => {
+        const click = " click";
+        return `<tr class="${click.trim()}" data-row="${i}">
+          <td><span class="mini ${v.cohort === "hot" ? "hot" : "near"}">${escapeHtml(v.cohortLabel)}</span></td>
+          <td class="title-cell">${escapeHtml(v.title)}<span>${escapeHtml(v.videoId)}</span></td>
+          <td>${escapeHtml(v.videoType)} · ${escapeHtml(v.tone)}</td>
+          <td>${escapeHtml(v.viewDisplay)}</td>
+          <td>${escapeHtml(v.sentimentDisplay)}</td>
+          <td><span class="mini ${v.pipeline.level}">${escapeHtml(v.pipeline.text)}</span></td>
+        </tr>`;
+      }).join("");
+
+      const verdict = view.ops.verdict;
+      const pickClass = (key, label) =>
+        (verdict === label ? " pick-" + key : "");
+
+      const banner = progressing
+        ? `<div class="progress-banner"><span class="spin"></span>${escapeHtml(progressLabel || ("频道样本 " + view.sampleProgress.done + "/" + view.sampleProgress.total))}</div>`
+        : "";
+
+      states.results.innerHTML = `
+        <div class="results">
+          ${banner}
+          <section class="zone">
+            <div class="zone-h"><h3><span class="zn">1</span>样本健康</h3><span class="meta-note">${escapeHtml(sampleNote)}</span></div>
+            <div class="ch-head" style="margin-bottom:14px">
+              <div class="avatar">${escapeHtml(view.channel.avatarText)}</div>
+              <div>
+                <h2>${escapeHtml(view.channel.title)}</h2>
+                <div class="handle">${escapeHtml(view.channel.handle || view.channel.id)}${view.is_fixture && view.fixtureNote ? " · " + escapeHtml(view.fixtureNote) : ""}</div>
+              </div>
+            </div>
+            <div class="health-row">${healthStatuses}</div>
+            ${healthNotes}
+          </section>
+
+          <section class="zone">
+            <div class="zone-h"><h3><span class="zn">2</span>硬指标</h3><span class="meta-note">播放等为样本均值，不是加总 · 订阅来自频道公开数据</span></div>
+            <div class="metrics">
+              <div class="metric"><div class="k">样本均播放</div><div class="v">${escapeHtml(view.metrics.avgViewDisplay)}</div><div class="u">${view.metrics.sampleCountUsed || "—"} 条均值</div></div>
+              <div class="metric"><div class="k">样本均点赞</div><div class="v">${escapeHtml(view.metrics.avgLikeDisplay)}</div><div class="u">${view.metrics.sampleCountUsed || "—"} 条均值</div></div>
+              <div class="metric"><div class="k">样本均评论</div><div class="v">${escapeHtml(view.metrics.avgCommentDisplay)}</div><div class="u">${view.metrics.sampleCountUsed || "—"} 条均值</div></div>
+              <div class="metric"><div class="k">样本均时长</div><div class="v">${escapeHtml(view.metrics.avgDurationDisplay)}</div><div class="u">${view.metrics.sampleCountUsed || "—"} 条均值</div></div>
+              <div class="metric"><div class="k">样本均 ER</div><div class="v">${escapeHtml(view.metrics.avgErDisplay)}</div><div class="u">(赞+评)/播放</div></div>
+              <div class="metric ch"><div class="k">频道订阅</div><div class="v">${escapeHtml(view.metrics.channelSubDisplay)}</div><div class="u">公开 channels.list</div></div>
+            </div>
+            <div class="health-sub" style="margin-top:12px">
+              <span>频道总播放 ${escapeHtml(view.metrics.channelViewDisplay)}（公开）</span>
+              <span>频道视频数 ${escapeHtml(view.metrics.channelVideoCountDisplay)}</span>
+              <span>不做粉画像 / 假粉 / 报价</span>
+            </div>
+          </section>
+
+          <section class="zone">
+            <div class="zone-h"><h3><span class="zn">3</span>最近 vs 最热</h3><span class="meta-note">两列对照，不合成一句人设</span></div>
+            <div class="split2">
+              <div class="col">
+                <div class="lab near">最近 ${view.recentVsHot.recent.videoCount} 条</div>
+                <div class="kv">
+                  <div class="rk">类型</div><div>${escapeHtml(view.recentVsHot.recent.typeSummary)}</div>
+                  <div class="rk">语气</div><div>${escapeHtml(view.recentVsHot.recent.toneSummary)}</div>
+                  <div class="rk">均播放</div><div>${escapeHtml(view.recentVsHot.recent.avgViewDisplay)}</div>
+                  <div class="rk">口碑</div><div>${escapeHtml(view.recentVsHot.recent.sentimentSummary)}${view.recentVsHot.recent.incomplete ? "（不完整）" : ""}</div>
+                </div>
+              </div>
+              <div class="col">
+                <div class="lab hot">最热 ${view.recentVsHot.hot.videoCount} 条</div>
+                <div class="kv">
+                  <div class="rk">类型</div><div>${escapeHtml(view.recentVsHot.hot.typeSummary)}</div>
+                  <div class="rk">语气</div><div>${escapeHtml(view.recentVsHot.hot.toneSummary)}</div>
+                  <div class="rk">均播放</div><div>${escapeHtml(view.recentVsHot.hot.avgViewDisplay)}</div>
+                  <div class="rk">口碑</div><div>${escapeHtml(view.recentVsHot.hot.sentimentSummary)}${view.recentVsHot.hot.incomplete ? "（不完整）" : ""}</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="zone">
+            <div class="zone-h"><h3><span class="zn">4</span>内容习惯</h3><span class="meta-note">论题按视频列出，不合并成假 bio</span></div>
+            <div class="split2">
+              <div>
+                <div class="sublab">类型占比</div>
+                <div class="bars">${typeBars || '<div class="bar-row"><span class="nm">—</span><div class="track"><i style="width:0%"></i></div><span class="n">0</span></div>'}</div>
+                <div class="sublab" style="margin-top:14px">收束 CTA / 贴片</div>
+                <div class="bars">${extras}</div>
+              </div>
+              <div>
+                <div class="sublab">各条论题（原文摘要）</div>
+                <ul class="theses">${theses}</ul>
+              </div>
+            </div>
+          </section>
+
+          ${audienceHtml}
+          ${commercialHtml}
+
+          <section class="zone">
+            <div class="zone-h"><h3><span class="zn">${alignZn}</span>内容 ↔ 评论错位</h3><span class="meta-note">${view.alignment.mismatchCount} / ${view.alignment.mismatchTotal} 条出现错位</span></div>
+            <div class="health-row" style="margin-bottom:12px">
+              <span class="status"><i class="dot ${view.alignment.mismatchCount > 0 ? "warn" : "ok"}"></i>${view.alignment.mismatchCount} / ${view.alignment.mismatchTotal} 条出现错位</span>
+            </div>
+            ${contrastSents}
+            <div class="split2" style="margin-top:12px">
+              <div class="col">
+                <div class="sublab">待确认</div>
+                <ul class="theses">${reviewItems}</ul>
+              </div>
+              <div class="col">
+                <div class="sublab">高赞负评（跨视频）</div>
+                <ul class="theses">${negItems}</ul>
+              </div>
+            </div>
+          </section>
+
+          <section class="zone">
+            <div class="zone-h"><h3><span class="zn">${tableZn}</span>样本视频</h3><span class="meta-note">点行下钻完整五区（需子任务完成）</span></div>
+            <table class="vt">
+              <thead>
+                <tr><th></th><th>视频</th><th>类型 / 语气</th><th>播放</th><th>口碑</th><th>管线</th></tr>
+              </thead>
+              <tbody>${rows || '<tr><td colspan="6" style="color:var(--muted)">暂无样本</td></tr>'}</tbody>
+            </table>
+          </section>
+
+          <section class="zone">
+            <div class="zone-h"><h3><span class="zn">${opsZn}</span>运营标记</h3><span class="meta-note">系统不下结论 · 人工三选一</span></div>
+            <div class="ops" id="opsBtns">
+              <button type="button" data-pick="倾向合作" class="${pickClass("yes", "倾向合作").trim()}">倾向合作</button>
+              <button type="button" data-pick="再观察" class="${pickClass("wait", "再观察").trim()}">再观察</button>
+              <button type="button" data-pick="不合作" class="${pickClass("no", "不合作").trim()}">不合作</button>
+            </div>
+            <textarea class="ops-note" id="opsNote" placeholder="可选备注，只留给运营自己看，例如价位、档期、竞品…">${escapeHtml(view.ops.note || "")}</textarea>
+            <div class="foot-hint">这三项是人打的勾，模型只给上面的证据。${view.ops.updatedAt ? " · 已保存 " + escapeHtml(view.ops.updatedAt) : ""}</div>
+          </section>
+        </div>`;
+
+      showState("results");
+
+      states.results.querySelectorAll("tr[data-row]").forEach(tr => {
+        tr.addEventListener("click", () => {
+          const row = view.videos[Number(tr.getAttribute("data-row"))];
+          if (!row) return;
+          openChannelChild(row);
+        });
+      });
+
+      const opsBtns = states.results.querySelector("#opsBtns");
+      if (opsBtns) {
+        opsBtns.querySelectorAll("button[data-pick]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const v = btn.getAttribute("data-pick");
+            putChannelOps(v, (document.getElementById("opsNote") || {}).value || "");
+          });
+        });
+      }
+      const noteEl = document.getElementById("opsNote");
+      if (noteEl) {
+        let t;
+        noteEl.addEventListener("change", () => {
+          putChannelOps(view.ops.verdict, noteEl.value || "");
+        });
+      }
+    }
+
+    async function putChannelOps(verdict, note) {
+      if (!activeChannelTaskId) {
+        toast("没有可标记的频道任务");
+        return;
+      }
+      try {
+        const res = await fetch(apiRoot() + "/v1/channel-analyses/" + encodeURIComponent(activeChannelTaskId) + "/ops", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ verdict: verdict || null, note: note || null }),
+        });
+        if (!res.ok) {
+          toast("标记保存失败");
+          return;
+        }
+        const body = await res.json().catch(() => ({}));
+        if (lastChannelView) {
+          lastChannelView.ops.verdict = verdict || null;
+          lastChannelView.ops.note = note || "";
+          if (body && body.updated_at) lastChannelView.ops.updatedAt = body.updated_at;
+          renderChannelBrief(lastChannelView, { progressing: false });
+        }
+        toast("已保存运营标记");
+      } catch (e) {
+        toast(String(e && e.message ? e.message : e));
+      }
+    }
+
+    function fiveZoneSummaryHtml(d) {
+      if (!d) return "<p>无结果</p>";
+      const segs = (d.segs || []).map(seg =>
+        `<div class="seg" style="margin-bottom:8px">
+          <div class="seg-top"><span class="frame ${frameClass(seg.key)}">${escapeHtml(seg.name)}</span><span class="conf">${Number(seg.conf||0).toFixed(2)}</span></div>
+          <p>${escapeHtml(seg.text || "")}</p>
+        </div>`
+      ).join("");
+      const cc = d.contentConclusion || {};
+      const kc = d.commentConclusion || {};
+      return `
+        <div style="font-size:13px;color:var(--muted);margin-bottom:10px">${escapeHtml(d.title || "")} · ${escapeHtml(d.channel || "")}</div>
+        <div class="health-row" style="margin-bottom:12px">
+          <span class="status"><i class="dot ok"></i>${escapeHtml((d.health && d.health.overall) || "")}</span>
+        </div>
+        <div class="sublab">内容拆解</div>
+        <div class="segs" style="grid-template-columns:1fr">${segs || "<p style='color:var(--muted)'>无片段</p>"}</div>
+        <div class="conclude" style="margin-top:12px">
+          <div class="conclude-lab">CONTENT</div>
+          <div>${escapeHtml(cc.thesis || "")}</div>
+          <div style="margin-top:6px;color:var(--muted);font-size:12px">${escapeHtml(cc.tone || "")}</div>
+        </div>
+        <div class="conclude comment" style="margin-top:10px">
+          <div class="conclude-lab">COMMENT</div>
+          <div>${escapeHtml(kc.doing || "")}</div>
+          <div style="margin-top:6px;color:var(--muted);font-size:12px">${escapeHtml(kc.match || "")}</div>
+        </div>
+        <div class="contrast-sent" style="margin-top:12px">${escapeHtml((d.contrast && d.contrast.sentence) || "")}</div>`;
+    }
+
+    async function openChannelChild(row) {
+      if (row.pending || !row.childTaskId) {
+        if (row.pending) toast("尚未完成");
+        else toast("尚未完成");
+        return;
+      }
+      try {
+        const res = await fetch(apiRoot() + "/v1/analyses/" + encodeURIComponent(row.childTaskId));
+        const body = await res.json();
+        if (!res.ok || !body.result) {
+          toast("尚未完成");
+          return;
+        }
+        const st = body.status;
+        if (st !== "completed" && st !== "cache_hit" && st !== "degraded") {
+          toast("尚未完成");
+          return;
+        }
+        const adapted = adaptAnalysisResult(body.result);
+        if (!adapted) {
+          toast("无法展示该视频结果");
+          return;
+        }
+        openDrawer(row.title || "单视频五区", fiveZoneSummaryHtml(adapted));
+      } catch (e) {
+        toast(String(e && e.message ? e.message : e));
+      }
+    }
+
+    async function pollChannelTask(taskId) {
+      // analyzing shell may already be visible from submitChannel; keep/refresh hint
+      showState("analyzing");
+      const hint = document.getElementById("analyzingHint");
+      if (hint && (!hint.textContent || hint.textContent.indexOf("解析频道") < 0)) {
+        hint.textContent = "解析频道 / 准备抽样…";
+      }
+      const bar = document.getElementById("progBar");
+      if (bar && (!bar.style.width || parseFloat(bar.style.width) < 10)) bar.style.width = "15%";
+      const outcome = await channelSession.poll(taskId, {
+        onProgress: (body) => {
+          const label = channelProgressText(body);
+          if (body && body.result) {
+            const adapted = adaptChannelBrief(body.result);
+            if (adapted) {
+              const st = body.status;
+              const progressing = st !== "completed" && st !== "degraded" && st !== "failed";
+              renderChannelBrief(adapted, { progressing: progressing, progressLabel: label });
+              if (bar && adapted.sampleProgress) {
+                const pct = Math.round(((adapted.sampleProgress.done + 0.35) / Math.max(adapted.sampleProgress.total, 1)) * 100);
+                bar.style.width = Math.min(95, Math.max(18, pct)) + "%";
+              }
+            }
+          } else {
+            // No sample yet — stay on analyzing shell
+            if (hint) hint.textContent = label || "抽样中…";
+            if (bar) {
+              const step = body && body.current_step != null ? Number(body.current_step) : 0;
+              bar.style.width = (step <= 0 ? 15 : step === 1 ? 28 : 40) + "%";
+            }
+          }
+        }
+      });
+      if (outcome.cancelled) return { cancelled: true };
+      if (outcome.timeout) {
+        return {
+          status: "failed",
+          error: { code: "poll_timeout", message: "频道分析超时（超过 600 秒），已停止等待" }
+        };
+      }
+      if (!outcome.ok) {
+        let msg = "网络错误";
+        if (outcome.body && (outcome.body.message || (outcome.body.error && outcome.body.error.message))) {
+          msg = outcome.body.message || outcome.body.error.message;
+        } else if (outcome.error) {
+          msg = String(outcome.error.message || outcome.error);
+        }
+        return { status: "failed", error: { code: "poll_error", message: msg } };
+      }
+      return outcome.body;
+    }
+
+    function showInvalidChannelError() {
+      setErrorCopy(INVALID_CHANNEL_TITLE, INVALID_CHANNEL_DETAIL);
+      showState("error");
+      lastShownId = null;
+    }
+
+    async function submitChannel() {
+      if (goBtn.disabled) return;
+      input.classList.remove("invalid");
+      urlCard.classList.remove("shake");
+      const raw = input.value.trim();
+      if (!raw) {
+        input.classList.add("invalid");
+        void urlCard.offsetWidth;
+        urlCard.classList.add("shake");
+        input.focus();
+        return;
+      }
+      if (!looksLikeChannelUrl(raw)) {
+        // soft client check — still allow POST; show local hint only for obvious video URLs
+        if (parseYouTubeId(raw)) {
+          showInvalidChannelError();
+          return;
+        }
+      }
+      try {
+        analysisSession.abort();
+        channelSession.abort();
+        // Immediate feedback — do not wait for POST (YouTube sampling is async now)
+        showState("analyzing");
+        const hint = document.getElementById("analyzingHint");
+        if (hint) hint.textContent = "解析频道 / 准备抽样…";
+        const bar = document.getElementById("progBar");
+        if (bar) bar.style.width = "15%";
+        goBtn.disabled = true;
+        const res = await fetch(apiRoot() + "/v1/channel-analyses", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: raw }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (res.status === 400 || (body && body.error === "invalid_channel_url")) {
+          goBtn.disabled = false;
+          showInvalidChannelError();
+          return;
+        }
+        if (res.status === 202) {
+          activeChannelTaskId = body.task_id || null;
+          if (hint && body.current_step_label) hint.textContent = body.current_step_label;
+          const done = await pollChannelTask(body.task_id);
+          if (!done || done.cancelled) return;
+          if (done.status === "failed" && !done.result) {
+            showTaskFailError(done);
+            return;
+          }
+          if (done.result) {
+            activeChannelTaskId = done.task_id || body.task_id || activeChannelTaskId;
+            const adapted = adaptChannelBrief(done.result);
+            if (adapted) renderChannelBrief(adapted, { progressing: false });
+          } else {
+            showTaskFailError(done);
+          }
+          return;
+        }
+        goBtn.disabled = false;
+        showTaskFailError(body);
+      } catch (e) {
+        goBtn.disabled = false;
+        setErrorCopy("频道分析失败", String(e && e.message ? e.message : e));
+        showState("error");
+      }
+    }
+
+    async function submitDispatch() {
+      if (uiMode === "channel") return submitChannel();
+      channelSession.abort();
+      return submit();
+    }
+
+    if (modeCtrl) {
+      modeCtrl.querySelectorAll("button[data-mode]").forEach(btn => {
+        btn.addEventListener("click", () => setMode(btn.getAttribute("data-mode")));
+      });
+    }
+    if (railVideo) railVideo.addEventListener("click", () => setMode("video"));
+    if (railChannel) railChannel.addEventListener("click", () => setMode("channel"));
+
+    goBtn.addEventListener("click", submitDispatch);
+    input.addEventListener("keydown", e => {
+      if (e.key === "Enter") { e.preventDefault(); submitDispatch(); }
+    });
+    document.querySelectorAll(".chip[data-url]").forEach(ch => {
+      ch.addEventListener("click", () => {
+        input.value = ch.getAttribute("data-url");
+        input.classList.remove("invalid");
+        input.focus();
+      });
+    });
+    setMode("video");
+  </script>
+</body>
+</html>

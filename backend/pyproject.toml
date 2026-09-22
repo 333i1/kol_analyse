@@ -1,0 +1,13 @@
+[project]
+name = "video-analysis-mvp"
+version = "0.1.0"
+requires-python = ">=3.11"
+description = "Single-video YouTube content + comments analysis MVP"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "network: requires network",
+    "llm: requires real LLM",
+]
+addopts = "-m \"not network and not llm\""

@@ -1,0 +1,678 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://kol.local/schema/channel-brief-result.schema.json",
+  "title": "ChannelBriefResult",
+  "description": "v2 频道抽样合作简报（D11）。禁止字段：建议合作/适合合作/危机裁决槽、假粉率、报价、商单品牌表。不修改单视频 schema。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "result_version",
+    "channel",
+    "sample",
+    "health",
+    "metrics",
+    "recent_vs_hot",
+    "content_habits",
+    "audience_habits",
+    "alignment",
+    "videos",
+    "ops"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "2.0.0"
+    },
+    "result_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "is_fixture": {
+      "type": "boolean"
+    },
+    "fixture_note": {
+      "type": "string"
+    },
+    "channel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "channel_id",
+        "title"
+      ],
+      "properties": {
+        "channel_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string"
+        },
+        "handle": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "subscriber_count": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "view_count": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "video_count": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "canonical_url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "sample": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "window_size",
+        "recent_count",
+        "hot_count",
+        "video_ids"
+      ],
+      "properties": {
+        "window_size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "recent_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "hot_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "video_ids": {
+          "type": "array",
+          "maxItems": 5,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{11}$"
+          }
+        },
+        "gap_notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "health": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "content_ok",
+        "content_total",
+        "comments_ok",
+        "comments_total",
+        "notes"
+      ],
+      "properties": {
+        "content_ok": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "content_total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "comments_ok": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "comments_total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "auto_caption_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failed_video_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sample_count_used"
+      ],
+      "properties": {
+        "sample_count_used": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "avg_view_count": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "avg_like_count": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "avg_comment_count": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "avg_duration_seconds": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "avg_engagement_rate": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "channel_subscriber_count": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "channel_view_count": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "channel_video_count": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      }
+    },
+    "recent_vs_hot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recent",
+        "hot"
+      ],
+      "properties": {
+        "recent": {
+          "$ref": "#/definitions/cohort_summary"
+        },
+        "hot": {
+          "$ref": "#/definitions/cohort_summary"
+        }
+      }
+    },
+    "content_habits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type_counts",
+        "theses"
+      ],
+      "properties": {
+        "type_counts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "tone_counts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "cta_purchase_rate": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "ad_overlay_count": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "theses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "video_id",
+              "cohort",
+              "text"
+            ],
+            "properties": {
+              "video_id": {
+                "type": "string"
+              },
+              "cohort": {
+                "type": "string",
+                "enum": [
+                  "recent",
+                  "hot"
+                ]
+              },
+              "text": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "audience_habits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sentiment",
+        "weighted_video_count"
+      ],
+      "properties": {
+        "sentiment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "positive",
+            "neutral",
+            "negative"
+          ],
+          "properties": {
+            "positive": {
+              "type": "number"
+            },
+            "neutral": {
+              "type": "number"
+            },
+            "negative": {
+              "type": "number"
+            }
+          }
+        },
+        "weighted_video_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "themes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "label",
+              "video_count"
+            ],
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "video_count": {
+                "type": "integer",
+                "minimum": 2
+              }
+            }
+          }
+        },
+        "reaction_types": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "label",
+              "share"
+            ],
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "share": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "quotes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "polarity",
+              "text",
+              "video_id"
+            ],
+            "properties": {
+              "polarity": {
+                "type": "string",
+                "enum": [
+                  "positive",
+                  "negative"
+                ]
+              },
+              "text": {
+                "type": "string"
+              },
+              "likes": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "video_id": {
+                "type": "string"
+              },
+              "video_title": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "commercial": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "全空时可省略本对象",
+      "properties": {
+        "commercial_nonnull_rate": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "ad_overlay_count": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "cta_purchase_rate": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "excerpts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "video_id",
+              "text"
+            ],
+            "properties": {
+              "video_id": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "kind": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "alignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mismatch_count",
+        "mismatch_total"
+      ],
+      "properties": {
+        "mismatch_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "mismatch_total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "contrast_sentences": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "human_review_items": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "high_like_negatives": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "videos": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "$ref": "#/definitions/sample_row"
+      }
+    },
+    "ops": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verdict"
+      ],
+      "properties": {
+        "verdict": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "倾向合作",
+            "再观察",
+            "不合作",
+            null
+          ]
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "updated_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  },
+  "definitions": {
+    "cohort_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "video_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "type_summary": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tone_summary": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "avg_view_count": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "sentiment_summary": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "incomplete": {
+          "type": "boolean"
+        }
+      }
+    },
+    "sample_row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "video_id",
+        "cohort",
+        "pipeline_status"
+      ],
+      "properties": {
+        "video_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{11}$"
+        },
+        "cohort": {
+          "type": "string",
+          "enum": [
+            "recent",
+            "hot"
+          ]
+        },
+        "title": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "published_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "duration_seconds": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "view_count": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "video_type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tone": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sentiment_positive": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "pipeline_status": {
+          "type": "string",
+          "enum": [
+            "queued",
+            "analyzing",
+            "completed",
+            "degraded",
+            "failed",
+            "cache_hit"
+          ]
+        },
+        "child_task_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
